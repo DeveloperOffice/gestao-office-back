@@ -10,6 +10,9 @@ def rename_key(list, mapping):
                 item[chave_nova] = item.pop(chave_antiga)
     return list
 def get_empresas(request):
+    if request.method != 'GET':
+        return JsonResponse({"error": "Método não permitido, use GET"}, status=405)
+    
     query = 'SELECT * FROM bethadba.geempre'
     result = fetch_data(query)
     key_mapping = {
