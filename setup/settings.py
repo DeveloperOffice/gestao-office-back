@@ -13,9 +13,7 @@ SECRET_KEY = env("SECRET_KEY", default="sua_chave_padrão_se_não_existir_no_env
 DEBUG = env.bool("DEBUG", default=False)
 
 # Configuração do banco (se estiver usando DATABASE_URL)
-DATABASES = {
-    "default": env.db()
-}
+
 
 # Configurações ODBC
 ODBC_DRIVER = env("ODBC_DRIVER", default="SQL Anywhere 17")
@@ -32,7 +30,7 @@ SECRET_KEY = 'django-insecure-j4-qw@_ozd(io-_1mglequnukk9h5ajfkub_bx2qj$%_v$6#*3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -83,10 +81,7 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": env.db()
 }
 
 
