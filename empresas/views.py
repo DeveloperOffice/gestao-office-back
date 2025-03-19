@@ -162,5 +162,4 @@ def get_empresas(request):
     }
     filtered_result = rename_key(result, key_mapping)
     
-    print(filtered_result[0])
     return JsonResponse({"Empresas": filtered_result}, safe=False)
