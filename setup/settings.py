@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'odbc_reader',
-    'empresas',
+    'get_empresas',
 ]
 
 
