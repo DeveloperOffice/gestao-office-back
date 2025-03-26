@@ -18,5 +18,6 @@ class get_clientes(APIView):
         
         query = 'SELECT * FROM bethadba.HRCLIENTE'
         result = fetch_data(query)
+
         
         return JsonResponse({"Empresas": result}, safe=False)
