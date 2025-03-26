@@ -38,26 +38,27 @@ class get_contratos(APIView):
         "demitidosmes_ctr": "demitidos_mes",
         "contribuintes_ctr": "contribuintes",
         "nrolanctos_ctr": "num_lancamentos_contabeis",
-        "ultrapassarnrolanctos_ctr": "num_lancamentos_manuais",
-        "manualmentectb_ctr": "id_contrato",
-        "outromodulosctb_ctr": "id_contrato",
-        "importadosctb_ctr": "id_contrato",
-        "nronotas_ctr": "id_contrato",
-        "ultrapassarnronotas_ctr": "id_contrato",
-        "manualmenteefi_ctr": "id_contrato",
-        "importadosefi_ctr": "id_contrato",
-        "nrohoras_ctr": "id_contrato",
-        "ultrapassarnrohoras_ctr": "id_contrato",
-        "escrita_ctr": "id_contrato",
-        "contabilidade_ctr": "id_contrato",
-        "folha_ctr": "id_contrato",
-        "patrimonio_ctr": "id_contrato",
-        "atualizar_ctr": "id_contrato",
-        "lalur_ctr": "id_contrato",
-        "registro_ctr": "id_contrato",
-        "data_nota_ctr": "id_contrato",
-        "data_contab_ctr": "id_contrato"
-        
+        "ultrapassarnrolanctos_ctr": "ultrapassa_num_lancamentos_contabeis",
+        "manualmentectb_ctr": "num_lancamentos_manuais_ctb",
+        "outromodulosctb_ctr": "lancamentos_outros_modulos",
+        "importadosctb_ctr": "lancamentos_via_txt_ctb",
+        "nronotas_ctr": "num_notasfiscais",
+        "ultrapassarnronotas_ctr": "ultrapassa_num_notasfiscais",
+        "manualmenteefi_ctr": "lancamentos_manualmente_fiscal",
+        "importadosefi_ctr": "lancamentos_via_txt_fiscal",
+        "nrohoras_ctr": "num_horas_trabalhadas",
+        "ultrapassarnrohoras_ctr": "ultrapassa_num_horas_trabalhadas",
+        "escrita_ctr": "escrita_fiscal",
+        "contabilidade_ctr": "contabilidade",
+        "folha_ctr": "folha",
+        "patrimonio_ctr": "patrimonio",
+        "atualizar_ctr": "atualizar",
+        "lalur_ctr": "lalur",
+        "registro_ctr": "registro",
+        "data_nota_ctr": "data_nota_ctr",
+        "data_contab_ctr": "data_contab_ctr"
         }
         
-        return JsonResponse({"Contratos": result}, safe=False)
+        filtered_result = rename_key(result, key_mapping)
+        
+        return JsonResponse({"Contratos": filtered_result}, safe=False)
