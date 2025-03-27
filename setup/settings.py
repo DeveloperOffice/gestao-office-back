@@ -21,14 +21,7 @@ ODBC_SERVER = env("ODBC_SERVER", default="srvcontabil")
 ODBC_DATABASE = env("ODBC_DATABASE", default="contabil")
 ODBC_USER = env("ODBC_USER", default="EXTERNO")
 ODBC_PASSWORD = env("ODBC_PASSWORD", default="externo")
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-j4-qw@_ozd(io-_1mglequnukk9h5ajfkub_bx2qj$%_v$6#*3'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
