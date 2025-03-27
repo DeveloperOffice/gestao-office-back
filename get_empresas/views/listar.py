@@ -11,5 +11,5 @@ class get_empresas(APIView):
             return JsonResponse({"error": "Método não permitido, use POST"}, status=405)
         
         result = integrate_data()
-        emp_result = result['Empresas']
+        emp_result = result
         return JsonResponse(emp_result, safe=False)
