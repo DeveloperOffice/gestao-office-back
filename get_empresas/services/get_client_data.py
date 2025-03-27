@@ -1,7 +1,7 @@
 
 from django.http import JsonResponse
 from odbc_reader.services import fetch_data
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def rename_key(list, mapping):
     for item in list:
@@ -180,10 +180,10 @@ def get_empresa():
 
 
 def get_imposto():
-    
     hoje = datetime.now()
     mes_atual = hoje.month
 
+    # Definir o ano atual e o próximo ano
     if mes_atual == 1:
         ano_atual = hoje.year - 1
     else:
@@ -191,19 +191,18 @@ def get_imposto():
 
     proximo_ano = ano_atual + 1
 
-    # Query montada com os anos ajustados
+    # Calcular a data de 3 meses anteriores
+    tres_meses_anteriores = (hoje.replace(year=ano_atual, month=mes_atual) - timedelta(days=90))
+
+    # Montar a query ajustada
     query = f"""
     SELECT codi_emp, codi_imp, data_sim, pdic_sim, sdev_sim, scre_sim
     FROM bethadba.efsdoimp 
-    WHERE data_sim = (
-        SELECT MAX(data_sim) 
-        FROM bethadba.efsdoimp  
-        WHERE data_sim >= '{ano_atual}-01-01' 
-        AND data_sim < '{proximo_ano}-01-01'
-    )
+    WHERE data_sim >= '{tres_meses_anteriores.strftime('%Y-%m-%d')}'
+    AND data_sim < '{hoje.strftime('%Y-%m-%d')}'
     """
 
-    
+    # Executar a query
     result = fetch_data(query)
     
     return JsonResponse({"Impostos": result}, safe=False)
