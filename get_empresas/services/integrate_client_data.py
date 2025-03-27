@@ -27,5 +27,8 @@ def integrate_data():
             empresa["escritorios"] = escritorios
             empresas_validas.append(empresa)
         # Se não encontrar, não adiciona à lista final
-
+    for empresa in empresas_validas:
+        codigo = empresa.get("codigo_empresa")
+        
+    
     return {"Empresas": empresas_validas}
