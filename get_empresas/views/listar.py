@@ -13,9 +13,9 @@ def rename_key(list, mapping):
 class get_empresas(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        if request.method != 'GET':
-            return JsonResponse({"error": "Método não permitido, use GET"}, status=405)
+    def post(self, request):
+        if request.method != 'POST':
+            return JsonResponse({"error": "Método não permitido, use POST"}, status=405)
         
         query = 'SELECT * FROM bethadba.geempre'
         result = fetch_data(query)
@@ -161,7 +161,6 @@ class get_empresas(APIView):
         "ASSINATURA_DIGITAL_RESPONSAVEL_LEGAL_EMPRESA": "ASSINATURA_DIGITAL_RESPONSAVEL_LEGAL_EMPRESA",
         "ORIGEM_EMP": "ORIGEM_EMP",
         "PERMITE_INCLUIR_BRCLIENT": "PERMITE_INCLUIR_BRCLIENT",
-        
         
         }
         filtered_result = rename_key(result, key_mapping)
