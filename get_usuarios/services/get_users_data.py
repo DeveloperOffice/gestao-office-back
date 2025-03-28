@@ -11,3 +11,15 @@ def get_lista_usuario():
         return JsonResponse({"error": str(e)}, status=500)
     
     return JsonResponse(result, safe=False)
+
+def get_atividades_usuario(start_date, end_date):
+    try:
+        query = f"""
+        SELECT * FROM bethadba.geloguser 
+        WHERE data_log BETWEEN '{start_date}' AND '{end_date}'
+        """
+        result = fetch_data(query)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+    return JsonResponse(result, safe=False)
