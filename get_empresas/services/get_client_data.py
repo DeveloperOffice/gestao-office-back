@@ -191,15 +191,15 @@ def get_imposto():
 
     proximo_ano = ano_atual + 1
 
-    # Calcular a data de 3 meses anteriores
-    tres_meses_anteriores = (hoje.replace(year=ano_atual, month=mes_atual) - timedelta(days=90))
+    # Calcular a data de 5 meses anteriores
+    cinco_meses_anteriores = (hoje.replace(year=ano_atual, month=mes_atual) - timedelta(days=150))
 
     # Montar a query ajustada
     query = f"""
     SELECT codi_emp, codi_imp, data_sim, pdic_sim, sdev_sim, scre_sim
     FROM bethadba.efsdoimp 
-    WHERE data_sim >= '{tres_meses_anteriores.strftime('%Y-%m-%d')}'
-    AND data_sim < '{hoje.strftime('%Y-%m-%d')}'
+    WHERE data_sim >= '{cinco_meses_anteriores.strftime('%Y-%m-%d')}'
+    AND data_sim <= '{hoje.strftime('%Y-%m-%d')}'
     """
 
     # Executar a query
