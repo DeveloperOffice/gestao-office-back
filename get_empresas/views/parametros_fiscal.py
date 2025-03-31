@@ -16,7 +16,9 @@ class get_contratos(APIView):
         if request.method != 'POST':
             return JsonResponse({"error": "Método não permitido, use POST"}, status=405)
         
-        query = 'SELECT * FROM bethadba.EFPARAM_BACK'
+        query = 'SELECT RFED_PAR, CODI_EMP FROM bethadba.EFPARAMETRO_VIGENCIA'
+                    
+                    
         result = fetch_data(query)
         # key_mapping = {
         # "i_contrato": "id_contrato",
