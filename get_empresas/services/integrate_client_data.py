@@ -8,6 +8,9 @@ def integrate_data():
 
     empresas_validas = []
 
+    #Criando indice para acessar os objetos de forma mais otimizada quando necessário
+    indiceEmpresas = {obj["codigo_empresa"]: obj for obj in empresas['Empresas']}
+    
     # Agrupar os escritórios por código da empresa
     for empresa in empresas["Empresas"]:
         codigo = empresa.get("codigo_empresa")
@@ -16,8 +19,15 @@ def integrate_data():
         # Procurar todos os escritórios para essa empresa
         for escritorio in clientes["Clientes"]:
             if escritorio.get("I_CLIENTE_FIXO") == codigo:
-                # Adicionar tanto o código do escritório quanto o I_CLIENTE
+                
+                #Verificação do nome do escritório
+                obj = indiceEmpresas.get(escritorio.get('CODI_EMP'))
+                nomeDoEscritorio = obj['nome_empresa'] if obj else "Desconhecido"
+                        
+                        
+
                 escritorios.append({
+                    "nome_escritorio": nomeDoEscritorio,
                     "codigo_escritorio": escritorio.get("CODI_EMP"),
                     "id_cliente_contrato": escritorio.get("I_CLIENTE")
                 })
