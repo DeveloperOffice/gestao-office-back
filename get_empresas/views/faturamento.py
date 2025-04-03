@@ -13,4 +13,4 @@ class get_faturamentos(APIView):
             return JsonResponse({"error": "Método não permitido, use POST"}, status=405)
         
         result = get_faturamento()
-        return JsonResponse(result, safe=False)
+        return result
