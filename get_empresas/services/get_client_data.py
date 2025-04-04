@@ -25,7 +25,7 @@ def get_cliente():
 
 def get_empresa():
     try:        
-        query = 'SELECT * FROM bethadba.geempre'
+        query = "SELECT * FROM bethadba.geempre"
         result = fetch_data(query)
         key_mapping = {
         "nome_emp": "nome_empresa",
@@ -178,32 +178,3 @@ def get_empresa():
     
     return JsonResponse({"Empresas": filtered_result}, safe=False)
 
-
-def get_imposto():
-    
-    hoje = datetime.now()
-    mes_atual = hoje.month
-
-    if mes_atual == 1:
-        ano_atual = hoje.year - 1
-    else:
-        ano_atual = hoje.year
-
-    proximo_ano = ano_atual + 1
-
-    # Query montada com os anos ajustados
-    query = f"""
-    SELECT codi_emp, codi_imp, data_sim, pdic_sim, sdev_sim, scre_sim
-    FROM bethadba.efsdoimp 
-    WHERE data_sim = (
-        SELECT MAX(data_sim) 
-        FROM bethadba.efsdoimp  
-        WHERE data_sim >= '{ano_atual}-01-01' 
-        AND data_sim < '{proximo_ano}-01-01'
-    )
-    """
-
-    
-    result = fetch_data(query)
-    
-    return JsonResponse({"Impostos": result}, safe=False)
