@@ -2,6 +2,7 @@ from get_empresas.services.get_client_data import *
 import json
 
 def integrate_data():
+    #Integrando todos os dados para formar a lista de clientes
     empresas = json.loads(get_empresa().content)
     clientes = json.loads(get_cliente().content)
     impostos = json.loads(get_imposto().content)
