@@ -11,6 +11,5 @@ urlpatterns = [
     path('admin', admin.site.urls),
     path('api/token', obtain_auth_token),
     path('empresa/', include('get_empresas.urls')),
-    path('impostos/', include('get_impostos.urls')),
-    path('usuarios/', include('get_usuarios.urls')),
+    path('impostos/', include('get_impostos.urls'))
 ]
