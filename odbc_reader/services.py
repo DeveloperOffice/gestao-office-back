@@ -25,3 +25,19 @@ def fetch_data(query):
 
     conn.close()
     return results  # Returns a list of objects
+
+def result_rename(query_result, key, codes, texts, default='Desconhecido'):
+    """
+    Substitui códigos numéricos por texts em um key específico de uma lista de dicionários.
+
+    :param query_result: Lista com dicionários (ex: lista de empresas)
+    :param key: Nome da chave que será substituída (ex: 'motivo_inatividade')
+    :param codes: Lista com os valores numéricos (ex: [1, 2, 3, 4])
+    :param texts: Lista com os texts correspondentes (ex: ['Outros', 'Baixada', ...])
+    :param padrao: Texto padrão caso o código não esteja na lista (default: 'Desconhecido')
+    """
+    mapa = dict(zip(codes, texts))
+    for item in query_result:
+        valor = item.get(key)
+        item[key] = mapa.get(valor, default)
+    return query_result

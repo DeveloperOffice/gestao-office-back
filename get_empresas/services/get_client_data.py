@@ -1,6 +1,6 @@
 
 from django.http import JsonResponse
-from odbc_reader.services import fetch_data
+from odbc_reader.services import fetch_data, result_rename
 from datetime import datetime
 
 def rename_key(list, mapping):
@@ -27,6 +27,13 @@ def get_empresa():
     try:        
         query = 'SELECT nome_emp, cepe_emp, cgce_emp, ramo_emp, codi_emp, rleg_emp, stat_emp, dina_emp, dcad_emp, ccae_emp, cpf_leg_emp, cnae_emp, codi_con, email_emp, dtinicio_emp, duracao_emp, dttermino_emp, razao_emp, tipoi_emp, i_cnae20, usa_cnae20, email_leg_emp, CERTIFICADO_DIGITAL   FROM bethadba.geempre'
         result = fetch_data(query)
+        
+        #Correção do motivo de inatividade
+        codigos = [1, 2, 3, 4]
+        textos = ['Outros', 'Baixada', 'Transferida', 'Inadimplente']
+        result = result_rename(result, 'tipoi_emp', codigos, textos)
+        
+        
         key_mapping = {
         "nome_emp": "nome_empresa",
         "cepe_emp": "CEP",
