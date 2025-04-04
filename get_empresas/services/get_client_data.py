@@ -25,7 +25,7 @@ def get_cliente():
 
 def get_empresa():
     try:        
-        query = "SELECT * FROM bethadba.geempre WHERE stat_emp = 'A'"
+        query = "SELECT * FROM bethadba.geempre"
         result = fetch_data(query)
         key_mapping = {
         "nome_emp": "nome_empresa",
