@@ -38,6 +38,7 @@ def get_atividades_usuario(start_date, end_date):
     
     return JsonResponse(result, safe=False)
 
+
 def get_atividades_usuario_cliente(start_date, end_date):
     total = json.loads(get_atividades_usuario(start_date, end_date).content)
     empresas = json.loads(get_empresa().content)
@@ -123,6 +124,3 @@ def get_atividades_usuario_modulo(start_date, end_date):
            
 
     return JsonResponse(resultado, safe=False)
-    
-        
-        
