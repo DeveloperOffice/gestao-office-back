@@ -108,11 +108,11 @@ def get_faturamento(data_inicial, data_final):
                 resultado[codi_emp] = {
                     "Faturamento": {
                         "Saidas": {mes: "0" for mes in meses_periodo.values()},
-                        "servicos": {mes: "0" for mes in meses_periodo.values()}
-                    },
-                    "Total": {
-                        "Total Saidas": "0",
-                        "Total servicos": "0"
+                        "servicos": {mes: "0" for mes in meses_periodo.values()},
+                        "Total": {
+                            "Total Saidas": "0",
+                            "Total servicos": "0"
+                        }
                     }
                 }
             
@@ -147,9 +147,9 @@ def get_faturamento(data_inicial, data_final):
                 resultado[codi_emp]["Faturamento"]["Saidas"][mes] = str(valor_atual)
                 
                 # Adicionar ao total de saídas (incluindo cancelados)
-                total_saidas = float(resultado[codi_emp]["Total"]["Total Saidas"])
+                total_saidas = float(resultado[codi_emp]["Faturamento"]["Total"]["Total Saidas"])
                 total_saidas += float(vcon_sai)
-                resultado[codi_emp]["Total"]["Total Saidas"] = str(total_saidas)
+                resultado[codi_emp]["Faturamento"]["Total"]["Total Saidas"] = str(total_saidas)
             
             # Adicionar valor de serviço
             vcon_ser = item.get('vcon_ser')
@@ -159,9 +159,9 @@ def get_faturamento(data_inicial, data_final):
                 resultado[codi_emp]["Faturamento"]["servicos"][mes] = str(valor_atual)
                 
                 # Adicionar ao total de serviços (incluindo cancelados)
-                total_servicos = float(resultado[codi_emp]["Total"]["Total servicos"])
+                total_servicos = float(resultado[codi_emp]["Faturamento"]["Total"]["Total servicos"])
                 total_servicos += float(vcon_ser)
-                resultado[codi_emp]["Total"]["Total servicos"] = str(total_servicos)
+                resultado[codi_emp]["Faturamento"]["Total"]["Total servicos"] = str(total_servicos)
             
             contador_saidas_processadas += 1
         
@@ -176,11 +176,11 @@ def get_faturamento(data_inicial, data_final):
                 resultado[codi_emp] = {
                     "Faturamento": {
                         "Saidas": {mes: "0" for mes in meses_periodo.values()},
-                        "servicos": {mes: "0" for mes in meses_periodo.values()}
-                    },
-                    "Total": {
-                        "Total Saidas": "0",
-                        "Total servicos": "0"
+                        "servicos": {mes: "0" for mes in meses_periodo.values()},
+                        "Total": {
+                            "Total Saidas": "0",
+                            "Total servicos": "0"
+                        }
                     }
                 }
             
@@ -215,9 +215,9 @@ def get_faturamento(data_inicial, data_final):
                 resultado[codi_emp]["Faturamento"]["servicos"][mes] = str(valor_atual)
                 
                 # Adicionar ao total de serviços (incluindo cancelados)
-                total_servicos = float(resultado[codi_emp]["Total"]["Total servicos"])
+                total_servicos = float(resultado[codi_emp]["Faturamento"]["Total"]["Total servicos"])
                 total_servicos += float(vcon_ser)
-                resultado[codi_emp]["Total"]["Total servicos"] = str(total_servicos)
+                resultado[codi_emp]["Faturamento"]["Total"]["Total servicos"] = str(total_servicos)
             
             contador_servicos_processados += 1
         
