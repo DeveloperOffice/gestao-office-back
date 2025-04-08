@@ -1,6 +1,6 @@
 
 from django.http import JsonResponse
-from odbc_reader.services import fetch_data
+from odbc_reader.services import fetch_data, result_rename
 from datetime import datetime, timedelta
 
 def rename_key(list, mapping):
