@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'odbc_reader',
     'get_empresas',
     'get_usuarios',
+    'get_folha',
 ]
 
 
