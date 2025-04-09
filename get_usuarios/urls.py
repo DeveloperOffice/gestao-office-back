@@ -3,6 +3,7 @@ from django.urls import path
 from get_usuarios.views.lista import get_users
 from get_usuarios.views.atividades import get_atividades, get_atividades_cliente, get_atividades_modulo
 from get_usuarios.views.importacoes import get_importacao_usuario, get_importacao_empresa
+from get_usuarios.views.lancamentos_cont import get_lancamento_empresa, get_lancamento_usuario
 
 urlpatterns = [
     #Listar
@@ -16,4 +17,8 @@ urlpatterns = [
     #Importações
     path('importacoes/usuario', get_importacao_usuario.as_view(), name='importacoes_usuarios'),
     path('importacoes/empresa', get_importacao_empresa.as_view(), name='importacoes_empresas'),
+    
+    #Lançamentos
+    path('lancamentos/usuario', get_lancamento_usuario.as_view(), name='lancamentos_usuarios'),
+    path('lancamentos/empresa', get_lancamento_empresa.as_view(), name='lancamentos_empresas'),
 ]
