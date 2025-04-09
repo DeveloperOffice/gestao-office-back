@@ -1,10 +1,13 @@
 from django.http import JsonResponse
 from odbc_reader.services import fetch_data
+from datetime import datetime
 
 
 def get_contratos():
     try:
-        query = '''
+        data_atual = datetime.now().strftime('%Y-%m-%d')
+        
+        query = f'''
             SELECT 
                 codi_emp,
                 i_cliente,
@@ -12,6 +15,7 @@ def get_contratos():
                 DATA_TERMINO,
                 VALOR_CONTRATO
             FROM bethadba.HRCONTRATO
+            WHERE DATA_TERMINO > '{data_atual}' OR DATA_TERMINO IS NULL
         '''
         result = fetch_data(query)
         return {"Contratos": result}
