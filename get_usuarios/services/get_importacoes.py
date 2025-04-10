@@ -109,7 +109,7 @@ def get_importacoes_empresa(start_date, end_date):
 
         # Função para formatar os dados de maneira mais organizada
         def formatar_mes(dados, primeiro_mes, ultimo_mes):
-            meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+            meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
             for codi_emp in dados:
                 for codi_usu in dados[codi_emp]:
                     mes_ocorrencias = {
@@ -130,12 +130,30 @@ def get_importacoes_empresa(start_date, end_date):
         entradas_formatadas = formatar_mes(entradas_agrupadas, primeiro_mes, ultimo_mes)
         servicos_formatados = formatar_mes(servicos_agrupados, primeiro_mes, ultimo_mes)
 
-        # Retorna a resposta JSON
-        return JsonResponse({
-            'saidas': saídas_formatadas,
-            'entradas': entradas_formatadas,
-            'servicos': servicos_formatados
-        }, safe=False)
+        # Reorganiza a estrutura em uma lista de objetos
+        importacoes = []
+        for codi_emp in saídas_formatadas:
+            # Calcular as somas totais para saídas, entradas, servicos e geral
+            total_saidas = sum(sum(v.values()) for v in saídas_formatadas[codi_emp].values())
+            total_entradas = sum(sum(v.values()) for v in entradas_formatadas.get(codi_emp, {}).values())
+            total_servicos = sum(sum(v.values()) for v in servicos_formatados.get(codi_emp, {}).values())
+            total_geral = total_saidas + total_entradas + total_servicos
+
+            importacoes.append({
+                "codi_emp": codi_emp,
+                "dados": {
+                    "saidas": saídas_formatadas[codi_emp],
+                    "entradas": entradas_formatadas.get(codi_emp, {}),
+                    "servicos": servicos_formatados.get(codi_emp, {}),
+                    "total_saidas": total_saidas,
+                    "total_entradas": total_entradas,
+                    "total_servicos": total_servicos,
+                    "total_geral": total_geral
+                }
+            })
+
+        return JsonResponse(importacoes, safe=False)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
