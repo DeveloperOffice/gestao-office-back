@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.http import JsonResponse
 from odbc_reader.services import fetch_data
 
@@ -125,8 +126,24 @@ def get_lista_empregados():
                 AND foempregados.i_empregados = forescisoes.i_empregados
         """
         result = fetch_data(query)
+        
+        empresas_dict = defaultdict(list)
+        for row in result:
+            codi_emp = row.get("codi_emp")
+            if codi_emp is not None:
+                row = dict(row)  # Garante que row é mutável
+                row.pop("codi_emp", None)  # Remove codi_emp de dentro do funcionário
+                empresas_dict[codi_emp].append(row)
+
+        # Transformar em lista de objetos com a estrutura desejada
+        dados_formatados = []
+        for codi_emp, empregados in empresas_dict.items():
+            dados_formatados.append({
+                "codi_emp": codi_emp,
+                "empregados": empregados
+            })
+
+        return JsonResponse(dados_formatados, safe=False)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-    return JsonResponse(result, safe=False)
