@@ -97,8 +97,6 @@ def get_lancamentos_usuario(start_date, end_date):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-
-
 def get_lancamentos_empresa(start_date, end_date):
     try:
         # Consultas para cada tipo de dado com agrupamento por mês
@@ -111,7 +109,7 @@ def get_lancamentos_empresa(start_date, end_date):
         """
         
         # Executa as consultas
-        result= fetch_data(query)
+        result = fetch_data(query)
 
         # Função para agrupar os dados por empresa e mês
         def agrupar_por_empresa_mes(result):
@@ -137,8 +135,10 @@ def get_lancamentos_empresa(start_date, end_date):
 
         # Função para formatar os dados de maneira mais organizada
         def formatar_mes(dados, primeiro_mes, ultimo_mes):
-            meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+            meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+            formatted_data = []
             for codi_emp in dados:
+                lancamentos = {}
                 for codi_usu in dados[codi_emp]:
                     mes_ocorrencias = {
                         meses[i]: dados[codi_emp][codi_usu][i+1] 
@@ -146,8 +146,15 @@ def get_lancamentos_empresa(start_date, end_date):
                     }
                     total_ocorrencias = sum(mes_ocorrencias.values())  # Soma todas as ocorrências
                     mes_ocorrencias["total"] = total_ocorrencias  # Adiciona o total de ocorrências
-                    dados[codi_emp][codi_usu] = mes_ocorrencias
-            return dados
+                    lancamentos[codi_usu] = mes_ocorrencias
+                
+                # Adiciona a estrutura de codi_emp com lançamentos
+                formatted_data.append({
+                    "codi_emp": codi_emp,
+                    "dados": lancamentos
+                })
+            
+            return formatted_data
 
         # Descobre o último mês do período
         ultimo_mes = int(datetime.strptime(end_date, '%Y-%m-%d').strftime('%m'))
