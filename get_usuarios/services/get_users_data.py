@@ -65,14 +65,17 @@ def get_atividades_usuario_cliente(start_date, end_date):
     for empresa, usuarios in resultado.items():
         empresa_dados = {
             "codi_emp": empresa,
-            "dados": []  # Lista de dados de usuários e tempo
+            "dados": [],  # Lista de dados de usuários e tempo
+            "tempo_gasto_total": 0  # Inicializa o total de tempo gasto
         }
         
+        # Preenche os dados de usuários e soma o tempo gasto total
         for usuario, tempo in usuarios.items():
             empresa_dados["dados"].append({
                 "usuario": usuario,
                 "tempo_gasto": tempo
             })
+            empresa_dados["tempo_gasto_total"] += tempo  # Somando o tempo total gasto pela empresa
         
         # Adiciona informações da empresa (nome) se disponível
         for empresa_info in empresas['Empresas']:
@@ -83,7 +86,7 @@ def get_atividades_usuario_cliente(start_date, end_date):
         # Move "nome_empresa" para o início
         empresa_dados = {
             "nome_empresa": empresa_dados["nome_empresa"],
-            **empresa_dados  # Adiciona o restante das chaves, incluindo "codi_emp" e "dados"
+            **empresa_dados  # Adiciona o restante das chaves, incluindo "codi_emp", "dados", "tempo_gasto_total"
         }
 
         agrupado.append(empresa_dados)
