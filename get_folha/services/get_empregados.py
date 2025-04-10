@@ -138,8 +138,12 @@ def get_lista_empregados():
         # Transformar em lista de objetos com a estrutura desejada
         dados_formatados = []
         for codi_emp, empregados in empresas_dict.items():
+            # Contagem de funcionários contratados (demissao = null)
+            num_contratados = sum(1 for empregado in empregados if empregado.get('demissao') is None)
+            
             dados_formatados.append({
                 "codi_emp": codi_emp,
+                "quantidade_contratados": num_contratados,
                 "empregados": empregados
             })
 
