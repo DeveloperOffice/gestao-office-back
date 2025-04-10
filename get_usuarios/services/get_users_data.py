@@ -45,6 +45,7 @@ def get_atividades_usuario_cliente(start_date, end_date):
     
     resultado = {}
     
+    # Agrupa os dados de tempo gasto por empresa e usuário
     for atividade in total:
         usuario = atividade['usua_log']
         empresa = atividade['codi_emp']
@@ -58,29 +59,34 @@ def get_atividades_usuario_cliente(start_date, end_date):
         
         resultado[empresa][usuario] += tempo_gasto
 
-    
-    agrupado = {}
+    # Estrutura final agrupada por codi_emp
+    agrupado = []
     
     for empresa, usuarios in resultado.items():
-        agrupado[empresa] = {
-            "nome_empresa": "", 
-            "usuarios": []
+        empresa_dados = {
+            "codi_emp": empresa,
+            "dados": []  # Lista de dados de usuários e tempo
         }
+        
         for usuario, tempo in usuarios.items():
-            agrupado[empresa]['usuarios'].append({
+            empresa_dados["dados"].append({
                 "usuario": usuario,
                 "tempo_gasto": tempo
             })
-            
-    for empresa in empresas['Empresas']:
-        id_empresa = empresa['codigo_empresa']
-        nome_empresa = empresa['nome_empresa']
         
-        if id_empresa in agrupado:
-            agrupado[id_empresa]['nome_empresa'] = nome_empresa
+        # Adiciona informações da empresa (nome) se disponível
+        for empresa_info in empresas['Empresas']:
+            if empresa_info['codigo_empresa'] == empresa:
+                empresa_dados["nome_empresa"] = empresa_info['nome_empresa']
+                break
 
-            
-                
+        # Move "nome_empresa" para o início
+        empresa_dados = {
+            "nome_empresa": empresa_dados["nome_empresa"],
+            **empresa_dados  # Adiciona o restante das chaves, incluindo "codi_emp" e "dados"
+        }
+
+        agrupado.append(empresa_dados)
 
     return JsonResponse(agrupado, safe=False)
 
