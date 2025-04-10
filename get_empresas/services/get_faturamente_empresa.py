@@ -170,9 +170,17 @@ def get_faturamento(data_inicial, data_final):
         logger.info(f"Total de registros: {total_registros}")
         logger.info(f"Empresas encontradas: {empresas_encontradas}")
 
-        # Resposta otimizada
+        # Reorganiza os dados para o frontend: lista com campo "codi_emp"
+        dados_formatados = []
+        for codi_emp, conteudo in resultado.items():
+            dados_formatados.append({
+                "codi_emp": codi_emp,
+                **conteudo  # inclui "Faturamento": {...}
+            })
+
+        # Resposta otimizada em formato que facilita filtragem
         response_data = {
-            "dados": resultado,
+            "dados": dados_formatados,
             "info_processamento": {
                 "total_registros": total_registros,
                 "empresas_encontradas": empresas_encontradas,
