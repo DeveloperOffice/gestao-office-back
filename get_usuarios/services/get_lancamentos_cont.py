@@ -135,7 +135,7 @@ def get_lancamentos_empresa(start_date, end_date):
 
         # Função para formatar os dados de maneira mais organizada
         def formatar_mes(dados, primeiro_mes, ultimo_mes):
-            meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+            meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
             formatted_data = []
             for codi_emp in dados:
                 lancamentos = {}
