@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from datetime import datetime
 from rest_framework.permissions import IsAuthenticated
-from get_main_pages.services.get_faturamento import get_faturamento
+from get_main_pages.services.get_analise_cliente import get_dados_analise_cliente
 import json
 
 
@@ -26,6 +26,6 @@ class get_analise_cliente(APIView):
         except ValueError:
             return JsonResponse({"error": "As datas devem estar no formato YYYY-MM-DD"}, status=400)
         
-        result = get_faturamento(start_date, end_date)
+        result = get_dados_analise_cliente(start_date, end_date)
         return JsonResponse (result, safe=False)
             
