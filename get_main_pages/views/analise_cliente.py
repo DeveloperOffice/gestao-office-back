@@ -26,6 +26,6 @@ class get_analise_cliente(APIView):
         except ValueError:
             return JsonResponse({"error": "As datas devem estar no formato YYYY-MM-DD"}, status=400)
         
-        result = json.loads(get_faturamento(start_date, end_date).content)
+        result = get_faturamento(start_date, end_date)
         return JsonResponse (result, safe=False)
             
