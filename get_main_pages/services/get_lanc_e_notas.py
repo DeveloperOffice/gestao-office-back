@@ -1,32 +1,43 @@
 from django.http import JsonResponse
 from odbc_reader.services import fetch_data
 from datetime import datetime
-import logging
 import calendar
+import logging
+import json
 
 logger = logging.getLogger(__name__)
+
+# Mês abreviado em português (ordenável)
+MESES_PT = {
+    "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
+    "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
+}
+ORDENA_MES_PT = {v: k for k, v in MESES_PT.items()}
 
 def get_importacoes_empresa(start_date, end_date):
     try:
         def agrupar_por_empresa_mes(query_result, data_key):
             dados = {}
             for row in query_result:
-                codi_emp = row['codi_emp']
+                if isinstance(row, bytes):
+                    row = json.loads(row.decode("utf-8"))
+
+                codi_emp = row["codi_emp"]
                 data = row[data_key]
                 mes = data.month
                 ano = data.year
-                chave = f"{calendar.month_abbr[mes].lower()}/{ano}"
+                nome_mes = f"{ORDENA_MES_PT[mes]}/{ano}"
 
                 if codi_emp not in dados:
                     dados[codi_emp] = {}
 
-                if chave not in dados[codi_emp]:
-                    dados[codi_emp][chave] = 0
+                if nome_mes not in dados[codi_emp]:
+                    dados[codi_emp][nome_mes] = 0
 
-                dados[codi_emp][chave] += row['total_ocorrencias']
+                dados[codi_emp][nome_mes] += row["total_ocorrencias"]
             return dados
 
-        # Queries com alias do campo de data original
+        # Queries
         query_saida = f"""
         SELECT codi_emp, dsai_sai AS data_ref, COUNT(*) AS total_ocorrencias
         FROM bethadba.efsaidas
@@ -63,34 +74,27 @@ def get_importacoes_empresa(start_date, end_date):
         GROUP BY codi_emp, data_lan
         """
 
-        # Executar as queries
-        result_saida = fetch_data(query_saida)
-        result_entrada = fetch_data(query_entrada)
-        result_servico = fetch_data(query_servicos)
-        result_lancamento = fetch_data(query_lancamentos)
-        result_lancamento_manual = fetch_data(query_lancamentos_manuais)
+        # Executar e agrupar
+        saidas = agrupar_por_empresa_mes(fetch_data(query_saida), "data_ref")
+        entradas = agrupar_por_empresa_mes(fetch_data(query_entrada), "data_ref")
+        servicos = agrupar_por_empresa_mes(fetch_data(query_servicos), "data_ref")
+        lancamentos = agrupar_por_empresa_mes(fetch_data(query_lancamentos), "data_ref")
+        lancamentos_manuais = agrupar_por_empresa_mes(fetch_data(query_lancamentos_manuais), "data_ref")
 
-        # Agrupar os resultados por empresa e mês/ano
-        saidas = agrupar_por_empresa_mes(result_saida, "data_ref")
-        entradas = agrupar_por_empresa_mes(result_entrada, "data_ref")
-        servicos = agrupar_por_empresa_mes(result_servico, "data_ref")
-        lancamentos = agrupar_por_empresa_mes(result_lancamento, "data_ref")
-        lancamentos_manuais = agrupar_por_empresa_mes(result_lancamento_manual, "data_ref")
+        # Todas empresas
+        todos_emp = set(saidas) | set(entradas) | set(servicos) | set(lancamentos) | set(lancamentos_manuais)
 
-        # Coletar todos os meses/anos únicos e todas as empresas
-        todos_emp = set(
-            list(saidas.keys()) +
-            list(entradas.keys()) +
-            list(servicos.keys()) +
-            list(lancamentos.keys()) +
-            list(lancamentos_manuais.keys())
-        )
-
+        # Todos os meses existentes
         meses_todos = set()
         for fonte in [saidas, entradas, servicos, lancamentos, lancamentos_manuais]:
             for emp in fonte:
                 meses_todos.update(fonte[emp].keys())
-        meses_ordenados = sorted(meses_todos, key=lambda x: (int(x.split('/')[1]), list(calendar.month_abbr).index(x.split('/')[0].capitalize())))
+
+        # Ordenar os meses corretamente
+        meses_ordenados = sorted(
+            meses_todos,
+            key=lambda x: (int(x.split('/')[1]), MESES_PT[x.split('/')[0]])
+        )
 
         # Montar estrutura final
         importacoes = []
