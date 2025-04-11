@@ -81,9 +81,31 @@ def get_faturamento(data_inicial, data_final):
                 continue
 
             if codi_emp not in resultado:
-                resultado[codi_emp] = {nome: 0.0 for nome in meses_intervalo.values()}
+                resultado[codi_emp] = {nome: [0.0, "0%"] for nome in meses_intervalo.values()}
 
-            resultado[codi_emp][nome_mes] += round(valor, 2)
+            resultado[codi_emp][nome_mes][0] += round(valor, 2)
+
+        # Calcular a variação mês a mês
+        meses_ordenados = sorted(meses_intervalo.items(), key=lambda x: x[0])  # [(1, 'jan'), (2, 'fev'), ...]
+
+        for codi_emp, fat in resultado.items():
+            for i in range(1, len(meses_ordenados)):
+                mes_atual = meses_ordenados[i][1]
+                mes_anterior = meses_ordenados[i - 1][1]
+
+                valor_atual = fat[mes_atual][0]
+                valor_anterior = fat[mes_anterior][0]
+
+                if valor_anterior > 0:
+                    variacao = ((valor_atual - valor_anterior) / valor_anterior) * 100
+                    fat[mes_atual][1] = f"{variacao:.2f}%"
+                else:
+                    fat[mes_atual][1] = "0%"
+
+            # Garante que o primeiro mês tenha variação "0%"
+            if meses_ordenados:
+                primeiro_mes = meses_ordenados[0][1]
+                fat[primeiro_mes][1] = "0%"
 
         # Reorganizar para lista final
         dados_formatados = [
@@ -97,5 +119,5 @@ def get_faturamento(data_inicial, data_final):
         return dados_formatados
 
     except Exception as e:
-        logger.exception("Erro ao processar faturamento com filtro de meses.")
+        logger.exception("Erro ao processar faturamento com variação.")
         return JsonResponse({"error": str(e)}, status=500)
