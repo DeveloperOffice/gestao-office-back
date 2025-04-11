@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def get_dados_analise_cliente(data_inicial, data_final):
     try:
-        result = get_faturamento()
+        result = get_atividades_empresa_mes(data_inicial, data_final)
         
         return JsonResponse(result, safe=False)
         

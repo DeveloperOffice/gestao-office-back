@@ -59,7 +59,7 @@ def get_contratados_por_mes(start_date, end_date):
             for codi_emp, meses in empresas_dict.items()
         ]
 
-        return JsonResponse(dados_formatados, safe=False)
+        return dados_formatados
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
