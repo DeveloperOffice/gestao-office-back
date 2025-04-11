@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'get_empresas',
     'get_usuarios',
     'get_folha',
+    'get_main_pages'
 ]
 
 

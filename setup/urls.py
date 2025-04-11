@@ -13,4 +13,5 @@ urlpatterns = [
     path('empresa/', include('get_empresas.urls')),
     path('folha/', include('get_folha.urls')),
     path('usuarios/', include('get_usuarios.urls')),
+    path('main/', include('get_main_pages.urls')),
 ]
