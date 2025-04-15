@@ -63,6 +63,7 @@ def get_socio(codigo_empresa):
 
         # Criando o resultado a partir do codigo da empresa fornecido ligando aos dicionários
         resultado = {}
+
         resultado["codi_emp"] = codigo_empresa
         resultado["nome_emp"] = consultaNome(codigo_empresa)["nome"]
         resultado["cnpj"] = consultaNome(codigo_empresa)["cnpj"]
