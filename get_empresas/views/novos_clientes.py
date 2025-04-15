@@ -3,11 +3,11 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from datetime import datetime
 from rest_framework.permissions import IsAuthenticated
-from get_empresas.services.get_ativos import get_ativos_mes
+from get_empresas.services.get_novos_clientes import get_novos_mes
 import json
 
 
-class get_ativos(APIView):
+class get_novos(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -26,6 +26,6 @@ class get_ativos(APIView):
         except ValueError:
             return JsonResponse({"error": "As datas devem estar no formato YYYY-MM-DD"}, status=400)
         
-        result = get_ativos_mes(start_date, end_date)
+        result = get_novos_mes(start_date, end_date)
         return JsonResponse (result, safe=False)
             

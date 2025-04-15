@@ -2,7 +2,7 @@ from datetime import datetime
 import calendar
 from odbc_reader.services import fetch_data
 
-def get_ativos_mes(start_date, end_date):
+def get_novos_mes(start_date, end_date):
     try:
         # Inicializa o dicionário para armazenar o número de empresas por mês
         empresas_por_mes = {}
