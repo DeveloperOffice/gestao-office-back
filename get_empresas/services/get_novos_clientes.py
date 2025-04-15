@@ -2,15 +2,16 @@ from datetime import datetime
 import calendar
 from odbc_reader.services import fetch_data
 
+
 def get_novos_mes(start_date, end_date):
     try:
-        # Inicializa o dicionário para armazenar o número de empresas por mês
-        empresas_por_mes = {}
+        # Inicializa a lista para armazenar os dados dos meses
+        empresas_por_mes = []
 
         # Converte start_date e end_date para datetime
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = datetime.strptime(end_date, "%Y-%m-%d")
-        
+
         # Consulta para pegar todas as empresas cadastradas até o final de cada mês dentro do intervalo
         query = f"""
         SELECT 
@@ -23,18 +24,22 @@ def get_novos_mes(start_date, end_date):
         GROUP BY ano, mes
         ORDER BY ano, mes
         """
-        
+
         # Aqui, a função fetch_data vai retornar os resultados da consulta
         result = fetch_data(query)
 
         # Processa os resultados e conta as empresas ativas até o final de cada mês no intervalo
         for row in result:
-            mes_ano = f"{calendar.month_abbr[int(row['mes'])].lower()}/{int(row['ano'])}"
+            mes_ano = (
+                f"{calendar.month_abbr[int(row['mes'])].lower()}/{int(row['ano'])}"
+            )
 
             # Verifica se o mês está dentro do intervalo de start_date e end_date
-            mes_ref = datetime(row['ano'], int(row['mes']), 1)
+            mes_ref = datetime(row["ano"], int(row["mes"]), 1)
             if start_date <= mes_ref <= end_date:
-                empresas_por_mes[mes_ano] = row['total_empresas']
+                empresas_por_mes.append(
+                    {"month": mes_ano, "value": row["total_empresas"]}
+                )
 
         return empresas_por_mes
 
