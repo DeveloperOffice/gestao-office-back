@@ -21,7 +21,16 @@ def get_cliente():
     
     return JsonResponse({"Clientes": result}, safe=False)
 
+def get_nome_empresa():
+    try:        
+        query = 'SELECT nome_emp, codi_emp, cgce_emp AS cnpj FROM bethadba.geempre'
+        result = fetch_data(query)
+
     
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500, safe=False)
+    
+    return result    
 
 def get_empresa():
     try:        
