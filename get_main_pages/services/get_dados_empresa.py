@@ -62,7 +62,7 @@ def get_empresa():
                 i_cliente,
                 VALOR_CONTRATO
             FROM bethadba.HRCONTRATO
-            WHERE DATA_TERMINO > '{data_atual}' OR DATA_TERMINO IS NULL
+            WHERE I_EVENTO = 1 AND (DATA_TERMINO > '{data_atual}' OR DATA_TERMINO IS NULL)
         """
         contratos_result = fetch_data(contratos_query)
 
