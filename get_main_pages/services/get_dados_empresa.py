@@ -34,7 +34,8 @@ def get_empresa():
             geempre.codi_con, 
             geempre.email_emp 
         FROM bethadba.geempre 
-        JOIN bethadba.HRCLIENTE ON geempre.codi_emp = HRCLIENTE.I_CLIENTE_FIXO
+        LEFT JOIN bethadba.HRCLIENTE 
+        ON geempre.codi_emp = HRCLIENTE.I_CLIENTE_FIXO
         """
         result = fetch_data(query)
         key_mapping = {
