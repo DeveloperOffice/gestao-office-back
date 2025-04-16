@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def rename_key(list, mapping):
     for item in list:
         for chave_antiga, chave_nova in mapping.items():
@@ -12,8 +13,9 @@ def rename_key(list, mapping):
                 item[chave_nova] = item.pop(chave_antiga)
     return list
 
+
 def get_empresa():
-    try:        
+    try:
         # Query original
         query = """
         SELECT 
@@ -25,7 +27,8 @@ def get_empresa():
             HRCLIENTE.I_CLIENTE AS id_cliente, 
             geempre.rleg_emp, 
             geempre.stat_emp, 
-            geempre.dina_emp, 
+            geempre.dina_emp,
+            geempre.dtinicio_emp, 
             geempre.dcad_emp, 
             geempre.cpf_leg_emp, 
             geempre.codi_con, 
@@ -42,6 +45,7 @@ def get_empresa():
             "rleg_emp": "responsavel_legal",
             "stat_emp": "situacao",
             "dina_emp": "data_inatividade",
+            "dtinicio_emp": "data_inicio",
             "dcad_emp": "data_cadastro",
             "cpf_leg_emp": "cpf_responsavel",
             "codi_con": "contador",
@@ -51,15 +55,15 @@ def get_empresa():
         empresas_raw = rename_key(result, key_mapping)
 
         # Pegar contratos válidos (sem término ou com término no futuro)
-        data_atual = datetime.now().strftime('%Y-%m-%d')
-        contratos_query = f'''
+        data_atual = datetime.now().strftime("%Y-%m-%d")
+        contratos_query = f"""
             SELECT 
                 codi_emp,
                 i_cliente,
                 VALOR_CONTRATO
             FROM bethadba.HRCONTRATO
             WHERE DATA_TERMINO > '{data_atual}' OR DATA_TERMINO IS NULL
-        '''
+        """
         contratos_result = fetch_data(contratos_query)
 
         # Criar um índice por (escritorio, id_cliente)
@@ -84,19 +88,22 @@ def get_empresa():
                     "cnpj": item["cnpj"],
                     "responsavel_legal": item["responsavel_legal"],
                     "situacao": item["situacao"],
+                    "data_inicio": item["data_inicio"],
                     "data_inatividade": item["data_inatividade"],
                     "data_cadastro": item["data_cadastro"],
                     "cpf_responsavel": item["cpf_responsavel"],
                     "contador": item["contador"],
                     "email": item["email"],
-                    "escritorios": []
+                    "escritorios": [],
                 }
 
-            empresas[cod]["escritorios"].append({
-                "escritorio": escritorio,
-                "id_cliente": id_cliente,
-                "valor_contrato": valor_contrato
-            })
+            empresas[cod]["escritorios"].append(
+                {
+                    "escritorio": escritorio,
+                    "id_cliente": id_cliente,
+                    "valor_contrato": valor_contrato,
+                }
+            )
 
         return list(empresas.values())
 
