@@ -12,10 +12,10 @@ class get_socios(APIView):
             return JsonResponse({"error": "Método não permitido, use POST"}, status=405)
 
         codigo_empresa = request.data.get("codi_emp")
-        codigo_empresa = int(codigo_empresa)
-
+        
         if not codigo_empresa:
             return JsonResponse({"error": "'codi_emp' é obrigatório."}, safe=False)
+        codigo_empresa = int(codigo_empresa)
         result = get_socio(codigo_empresa)
 
         if "error" in result:
