@@ -15,6 +15,7 @@ class get_socios(APIView):
         
         if not codigo_empresa:
             return JsonResponse({"error": "'codi_emp' é obrigatório."}, safe=False)
+        
         codigo_empresa = int(codigo_empresa)
         result = get_socio(codigo_empresa)
 
