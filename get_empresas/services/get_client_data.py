@@ -41,6 +41,9 @@ def get_empresa():
         "cepe_emp": "CEP",
         "cgce_emp": "cnpj",
         "ramo_emp": "ramo_atividade",
+        "cnae_emp": "CNAE",
+        "i_cnae20": "CNAE_20",
+        "usa_cnae20": "usa_CNAE_20",
         "codi_emp": "codigo_empresa",
         "rleg_emp": "responsavel_legal",
         "stat_emp": "situacao",
@@ -48,7 +51,6 @@ def get_empresa():
         "dcad_emp": "data_cadastro",
         "ccae_emp": "CAE",
         "cpf_leg_emp": "cpf_responsavel",
-        "cnae_emp": "CNAE",
         "codi_con": "contador",
         "email_emp": "email",
         "dtinicio_emp": "data_inicio_atividades",
@@ -56,8 +58,7 @@ def get_empresa():
         "dttermino_emp": "data_termino_contrato",
         "razao_emp": "razao_social",
         "tipoi_emp": "motivo_inatividade",
-        "i_cnae20": "CNAE_20",
-        "usa_cnae20": "usa_CNAE_20",
+
         "email_leg_emp": "email_resp_legal",
         "CERTIFICADO_DIGITAL": "cert_digital",
 
