@@ -18,9 +18,37 @@ def read_google_sheets(link):
         
         # Lê a planilha
         df = pd.read_csv(csv_url)
-        print("✅ Planilha carregada com sucesso!")
+        print("Validando dados de login")
         return df
 
     except Exception as e:
-        print(f"❌ Erro ao ler a planilha: {e}")
+        print(f" Erro ao ler ao validar dados de login: {e}")
         return None
+
+
+def login_manager(usuario,senha):
+    try:
+            df = read_google_sheets('https://docs.google.com/spreadsheets/d/1y1MwGwrjl6hNoeWadZyBPmZsJkTarjGpujwlEUq0uc0/edit?usp=sharing')
+
+            if df is None:
+                return {'error': 'Erro ao processar login, fale com o seu administrador'}
+
+            usuario = usuario.lower()
+            # Verifica se o usuario está na coluna 'usuario' (ajuste conforme o usuario da coluna na planilha)
+            usuario = df[df['USUARIO'].str.lower() == usuario]
+    
+            # Se o usuario não for encontrado, retorna erro
+            if usuario.empty:
+                return {'result': False}
+
+            # Verifica se a senha na coluna ao lado (por exemplo, 'senha') bate
+            senha_correta = usuario['SENHA'].values[0]  # Ajuste 'senha' conforme o nome da coluna na planilha
+            if senha == senha_correta:
+                return {'result': True}
+            else:
+                return {'result': False}
+
+    except Exception as e:
+        return {'error': f'Erro ao processar login, fale com o seu administrador'}
+    
+    
