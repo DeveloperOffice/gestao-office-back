@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 
+
 def read_google_sheets(link):
     try:
         # Extrai o ID da planilha
@@ -15,10 +16,9 @@ def read_google_sheets(link):
 
         # Constrói o link de exportação CSV
         csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
-        
+
         # Lê a planilha
         df = pd.read_csv(csv_url)
-        print("Validando dados de login")
         return df
 
     except Exception as e:
@@ -26,29 +26,31 @@ def read_google_sheets(link):
         return None
 
 
-def login_manager(usuario,senha):
+def login_manager(usuario, senha):
     try:
-            df = read_google_sheets('https://docs.google.com/spreadsheets/d/1y1MwGwrjl6hNoeWadZyBPmZsJkTarjGpujwlEUq0uc0/edit?usp=sharing')
+        df = read_google_sheets(
+            "https://docs.google.com/spreadsheets/d/1y1MwGwrjl6hNoeWadZyBPmZsJkTarjGpujwlEUq0uc0/edit?usp=sharing"
+        )
 
-            if df is None:
-                return {'error': 'Erro ao processar login, fale com o seu administrador'}
+        if df is None:
+            return {"error": "Erro ao processar login, fale com o seu administrador"}
 
-            usuario = usuario.lower()
-            # Verifica se o usuario está na coluna 'usuario' (ajuste conforme o usuario da coluna na planilha)
-            usuario = df[df['USUARIO'].str.lower() == usuario]
-    
-            # Se o usuario não for encontrado, retorna erro
-            if usuario.empty:
-                return {'result': False}
+        usuario = usuario.lower()
+        # Verifica se o usuario está na coluna 'usuario' (ajuste conforme o usuario da coluna na planilha)
+        usuario = df[df["USUARIO"].str.lower() == usuario]
 
-            # Verifica se a senha na coluna ao lado (por exemplo, 'senha') bate
-            senha_correta = usuario['SENHA'].values[0]  # Ajuste 'senha' conforme o nome da coluna na planilha
-            if senha == senha_correta:
-                return {'result': True}
-            else:
-                return {'result': False}
+        # Se o usuario não for encontrado, retorna erro
+        if usuario.empty:
+            return {"result": False}
+
+        # Verifica se a senha na coluna ao lado (por exemplo, 'senha') bate
+        senha_correta = usuario["SENHA"].values[
+            0
+        ]  # Ajuste 'senha' conforme o nome da coluna na planilha
+        if senha == senha_correta:
+            return {"result": True}
+        else:
+            return {"result": False}
 
     except Exception as e:
-        return {'error': f'Erro ao processar login, fale com o seu administrador'}
-    
-    
+        return {"error": f"Erro ao processar login, fale com o seu administrador"}
