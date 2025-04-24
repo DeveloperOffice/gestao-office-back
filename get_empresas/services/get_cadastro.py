@@ -13,25 +13,31 @@ def get_cadastros():
         rleg_emp,
         dtinicio_emp,
         dcad_emp
-        
-        
         FROM bethadba.geempre WHERE stat_emp = 'A'"""
         result = fetch_data(query)
         return result
-
     except Exception as e:
         return {"error": str(e)}
-
-
-from datetime import datetime, timedelta
-
-from datetime import datetime, timedelta
 
 
 def get_aniversariantes():
     try:
         empresas = get_cadastros()
         hoje = datetime.today()
+
+        # Definir o intervalo do mês atual com 5 dias antes do primeiro e 5 dias após o último dia do mês
+        primeiro_dia_mes = hoje.replace(day=1)
+        ultimo_dia_mes = (primeiro_dia_mes + timedelta(days=32)).replace(
+            day=1
+        ) - timedelta(days=1)
+
+        # Intervalos adicionais de 5 dias antes e 5 dias depois
+        intervalo_inicial = primeiro_dia_mes - timedelta(
+            days=5
+        )  # 5 dias antes do primeiro dia
+        intervalo_final = ultimo_dia_mes + timedelta(
+            days=5
+        )  # 5 dias depois do último dia
 
         aniversariante_cadastro = []
         aniversariante_inicio_atividades = []
@@ -49,19 +55,19 @@ def get_aniversariantes():
                 continue
             vistos.add(codi_emp)
 
+            # Mantendo a conversão das datas para strings
             data_cadastro_str = (
                 data_cadastro.strftime("%Y-%m-%d") if data_cadastro else None
             )
             data_inicio_str = data_inicio.strftime("%Y-%m-%d") if data_inicio else None
 
-            # Aniversário de cadastro nos próximos 30 dias
+            # Aniversário de cadastro dentro do intervalo (5 dias antes do primeiro até 5 dias após o último dia do mês)
             if data_cadastro:
                 try:
                     aniversario = datetime(
                         hoje.year, data_cadastro.month, data_cadastro.day
                     )
-                    delta_dias = (aniversario.date() - hoje.date()).days
-                    if 0 <= delta_dias <= 30:
+                    if intervalo_inicial <= aniversario <= intervalo_final:
                         aniversariante_cadastro.append(
                             {
                                 "codi_emp": codi_emp,
@@ -72,16 +78,15 @@ def get_aniversariantes():
                             }
                         )
                 except ValueError:
-                    pass  # pula datas inválidas como 29/02 em ano não bissexto
+                    pass  # Pula datas inválidas, como 29/02 em ano não bissexto
 
-            # Aniversário de início de atividades nos próximos 30 dias
+            # Aniversário de início de atividades dentro do intervalo
             if data_inicio:
                 try:
                     aniversario = datetime(
                         hoje.year, data_inicio.month, data_inicio.day
                     )
-                    delta_dias = (aniversario.date() - hoje.date()).days
-                    if 0 <= delta_dias <= 30:
+                    if intervalo_inicial <= aniversario <= intervalo_final:
                         aniversariante_inicio_atividades.append(
                             {
                                 "codi_emp": codi_emp,
