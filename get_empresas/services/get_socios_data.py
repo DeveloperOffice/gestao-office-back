@@ -5,7 +5,6 @@ from collections import defaultdict
 
 def get_socio(codigo_empresa):
     try:
-        # CONSULTA ATUALIZADA com bethadba.gequadrosocietario_socios + bethadba.gesocios
         query = f"""
             SELECT 
                 bethadba.gequadrosocietario_socios.codi_emp,
@@ -17,8 +16,6 @@ def get_socio(codigo_empresa):
             WHERE bethadba.gesocios.emancipado = 'N'
         """
         result = fetch_data(query)
-
-        # Nome das empresas
         nomeEmpresas = get_nome_empresa()
 
         def consultaNome(code):
@@ -34,40 +31,44 @@ def get_socio(codigo_empresa):
                 "cnpj": empresa.get("cnpj", "CNPJ não informado"),
             }
 
-        empresas_dict = defaultdict(list)
+        empresas_dict = defaultdict(set)  # usa set para evitar duplicatas
         for item in result:
             codi_emp = item["codi_emp"]
             nome_socio = item["nome"]
-            empresas_dict[codi_emp].append(nome_socio)
+            empresas_dict[codi_emp].add(nome_socio)
 
-        socios_dict = defaultdict(list)
+        socios_dict = defaultdict(set)  # mesma ideia
         for item in result:
             codi_emp = item["codi_emp"]
             nome_socio = item["nome"]
-            socios_dict[nome_socio].append(codi_emp)
+            socios_dict[nome_socio].add(codi_emp)
 
-        resultado = {}
-        resultado["codi_emp"] = codigo_empresa
-        resultado["nome_emp"] = consultaNome(codigo_empresa)["nome"]
-        resultado["cnpj"] = consultaNome(codigo_empresa)["cnpj"]
-        resultado["socios"] = empresas_dict[codigo_empresa]
-        resultado["dados"] = []
+        resultado = {
+            "codi_emp": codigo_empresa,
+            "nome_emp": consultaNome(codigo_empresa)["nome"],
+            "cnpj": consultaNome(codigo_empresa)["cnpj"],
+            "socios": sorted(empresas_dict[codigo_empresa]),  # ordenado pra ficar bonito
+            "dados": []
+        }
 
-        for i in empresas_dict[codigo_empresa]:
-            lista_empresas = socios_dict[i]
-            lista_empresas.remove(codigo_empresa)
+        # Itera sobre sócios únicos
+        for socio in empresas_dict[codigo_empresa]:
+            empresas_socio = socios_dict[socio] - {codigo_empresa}  # remove a empresa principal
             lista_nome_empresas = []
-            for id in lista_empresas:
+
+            for id in empresas_socio:
                 nome_empresa = consultaNome(id)
-                lista_nome_empresas.append(
-                    {
+                if nome_empresa:
+                    lista_nome_empresas.append({
                         "codi_emp": id,
                         "nome_emp": nome_empresa["nome"],
-                        "cnpj": nome_empresa["cnpj"],
-                    }
-                )
+                        "cnpj": nome_empresa["cnpj"]
+                    })
 
-            resultado["dados"].append({"socio": i, "empresas": lista_nome_empresas})
+            resultado["dados"].append({
+                "socio": socio,
+                "empresas": lista_nome_empresas
+            })
 
         return resultado
 
