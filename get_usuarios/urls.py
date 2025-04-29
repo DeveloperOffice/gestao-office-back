@@ -10,7 +10,7 @@ urlpatterns = [
     path('listar', get_users.as_view(), name='listar_usuarios'),
     
     #Atividades
-    path('atividades/cliente', get_atividades_cliente.as_view(), name='atividades_usuarios_cliente'),
+    path('atividades/empresa', get_atividades_cliente.as_view(), name='atividades_usuarios_cliente'),
     path('atividades/modulo', get_atividades_modulo.as_view(), name='atividades_usuarios_modulo'),
     
     #Importações
