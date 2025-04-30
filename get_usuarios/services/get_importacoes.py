@@ -4,45 +4,50 @@ import json
 
 def get_importacoes_usuario(start_date, end_date):
     try:
-        # Consultando a tabela de saídas e contando as ocorrências
-        query_saidas = f"""
-            SELECT codi_usu, COUNT(*) AS total_ocorrencias
-            FROM bethadba.efsaidas
-            WHERE dsai_sai BETWEEN '{start_date}' AND '{end_date}'
-            GROUP BY codi_usu
-            ORDER BY total_ocorrencias DESC
-        """
-        result_saidas = fetch_data(query_saidas)
+        meses_abrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+                       'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
-        # Consultando a tabela de entradas e contando as ocorrências
-        query_entradas = f"""
-            SELECT codi_usu, COUNT(*) AS total_ocorrencias
-            FROM bethadba.efentradas
-            WHERE dent_ent BETWEEN '{start_date}' AND '{end_date}'
-            GROUP BY codi_usu
-            ORDER BY total_ocorrencias DESC
-        """
-        result_entradas = fetch_data(query_entradas)
+        def processa(query, campo_data):
+            sql = f"""
+                SELECT codi_usu, EXTRACT(MONTH FROM {campo_data}) AS mes, COUNT(*) AS total_ocorrencias
+                FROM {query}
+                WHERE {campo_data} BETWEEN '{start_date}' AND '{end_date}'
+                GROUP BY codi_usu, mes
+                ORDER BY codi_usu, mes
+            """
+            result = fetch_data(sql)
+            dados = {}
+            for row in result:
+                codi_usu = row['codi_usu']
+                mes = row['mes']
+                total = row['total_ocorrencias']
+                if codi_usu not in dados:
+                    dados[codi_usu] = {i: 0 for i in range(1, 13)}
+                dados[codi_usu][mes] += total
+            return dados
 
-        # Consultando a tabela de serviços e contando as ocorrências
-        query_servicos = f"""
-            SELECT codi_usu, COUNT(*) AS total_ocorrencias
-            FROM bethadba.efservicos
-            WHERE dser_ser BETWEEN '{start_date}' AND '{end_date}'
-            GROUP BY codi_usu
-            ORDER BY total_ocorrencias DESC
-        """
-        result_servicos = fetch_data(query_servicos)
-        
-        # Estruturando o resultado final com as três tabelas separadas
+        # Consulta agrupada por mês para cada tabela
+        saidas = processa("bethadba.efsaidas", "dsai_sai")
+        entradas = processa("bethadba.efentradas", "dent_ent")
+        servicos = processa("bethadba.efservicos", "dser_ser")
+
+        def formatar(dados):
+            formatado = []
+            for codi_usu, meses_dict in dados.items():
+                item = {"codi_usu": codi_usu}
+                for i in range(1, 13):
+                    item[meses_abrev[i - 1]] = meses_dict[i]
+                formatado.append(item)
+            return formatado
+
+        # Retorna os dados formatados
         return JsonResponse({
-            "saidas": result_saidas,
-            "entradas": result_entradas,
-            "servicos": result_servicos
+            "saidas": formatar(saidas),
+            "entradas": formatar(entradas),
+            "servicos": formatar(servicos)
         }, safe=False)
 
     except Exception as e:
-        # Retorna um erro caso haja algum problema
         return JsonResponse({"error": str(e)}, status=500)
 
 
