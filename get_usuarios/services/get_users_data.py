@@ -40,58 +40,76 @@ def get_atividades_usuario(start_date, end_date):
 
 
 def get_atividades_usuario_cliente(start_date, end_date):
-    total = json.loads(get_atividades_usuario(start_date, end_date).content)
-    empresas = json.loads(get_empresa().content)
-    
-    resultado = {}
-    
-    # Agrupa os dados de tempo gasto por empresa e usuário
-    for atividade in total:
-        usuario = atividade['usua_log']
-        empresa = atividade['codi_emp']
-        tempo_gasto = format_log_time(atividade['tini_log'], atividade['tfim_log'])
-        
-        if empresa not in resultado:
-            resultado[empresa] = {}
-        
-        if usuario not in resultado[empresa]:
-            resultado[empresa][usuario] = 0
-        
-        resultado[empresa][usuario] += tempo_gasto
+    try:
+        atividades = json.loads(get_atividades_usuario(start_date, end_date).content)
+        empresas = json.loads(get_empresa().content)
 
-    # Estrutura final agrupada por codi_emp
-    agrupado = []
-    
-    for empresa, usuarios in resultado.items():
-        empresa_dados = {
-            "codi_emp": empresa,
-            "dados": [],  # Lista de dados de usuários e tempo
-            "tempo_gasto_total": 0  # Inicializa o total de tempo gasto
-        }
-        
-        # Preenche os dados de usuários e soma o tempo gasto total
-        for usuario, tempo in usuarios.items():
-            empresa_dados["dados"].append({
-                "usuario": usuario,
-                "tempo_gasto": tempo
-            })
-            empresa_dados["tempo_gasto_total"] += tempo  # Somando o tempo total gasto pela empresa
-        
-        # Adiciona informações da empresa (nome) se disponível
-        for empresa_info in empresas['Empresas']:
-            if empresa_info['codigo_empresa'] == empresa:
-                empresa_dados["nome_empresa"] = empresa_info['nome_empresa']
-                break
+        meses_abrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+                       'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
-        # Move "nome_empresa" para o início
-        empresa_dados = {
-            "nome_empresa": empresa_dados["nome_empresa"],
-            **empresa_dados  # Adiciona o restante das chaves, incluindo "codi_emp", "dados", "tempo_gasto_total"
-        }
+        resultado = {}
+        meses_encontrados = set()
 
-        agrupado.append(empresa_dados)
+        for atividade in atividades:
+            usuario = atividade['usua_log']
+            empresa = atividade['codi_emp']
+            tempo_gasto = format_log_time(atividade['tini_log'], atividade['tfim_log'])
+            mes = int(datetime.strptime(atividade['data_log'], "%Y-%m-%d").strftime('%m'))
 
-    return JsonResponse(agrupado, safe=False)
+            meses_encontrados.add(mes)
+
+            if empresa not in resultado:
+                resultado[empresa] = {}
+
+            if usuario not in resultado[empresa]:
+                resultado[empresa][usuario] = {}
+
+            if mes not in resultado[empresa][usuario]:
+                resultado[empresa][usuario][mes] = 0
+
+            resultado[empresa][usuario][mes] += tempo_gasto
+
+        # Ordena os meses encontrados
+        meses_ordenados = sorted(list(meses_encontrados))
+
+        agrupado = []
+
+        for empresa, usuarios in resultado.items():
+            empresa_dados = {
+                "codi_emp": empresa,
+                "dados": [],
+                "tempo_gasto_total": 0
+            }
+
+            for usuario, meses_dict in usuarios.items():
+                usuario_data = {"usuario": usuario}
+                total_usuario = 0
+
+                for i in meses_ordenados:
+                    tempo = meses_dict.get(i, 0)
+                    usuario_data[meses_abrev[i - 1]] = tempo
+                    total_usuario += tempo
+
+                usuario_data["total"] = total_usuario
+                empresa_dados["dados"].append(usuario_data)
+                empresa_dados["tempo_gasto_total"] += total_usuario
+
+            for empresa_info in empresas['Empresas']:
+                if empresa_info['codigo_empresa'] == empresa:
+                    empresa_dados["nome_empresa"] = empresa_info['nome_empresa']
+                    break
+
+            empresa_dados = {
+                "nome_empresa": empresa_dados.get("nome_empresa", ""),
+                **empresa_dados
+            }
+
+            agrupado.append(empresa_dados)
+
+        return JsonResponse({"Atividades": agrupado}, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 def get_atividades_usuario_modulo(start_date, end_date):
