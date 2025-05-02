@@ -113,41 +113,50 @@ def get_atividades_usuario_cliente(start_date, end_date):
 
 
 def get_atividades_usuario_modulo(start_date, end_date):
-    
-    module_mapping = {  
-                        1: 'Contabil',
-                        3: 'Honorarios',
-                        4: 'Patrimonio',
-                        5: 'Escrita Fiscal',
-                        6: 'Lalur',
-                        7: 'Atualizar',
-                        8: 'Protocolos',
-                        9: 'Administrar',
-                        12: 'Folha',
-                        13: 'Ponto Eletronico',
-                        14: 'Auditoria',
-                        15: 'Registro'
-                        }
-    
-    total = json.loads(get_atividades_usuario(start_date, end_date).content)
-    resultado = {}
-    
-    
-    for atividade in total:
-        usuario = atividade['usua_log']
-        modulo = atividade['sist_log']
-        modulo_formatado = module_mapping[modulo]
-        tempo_gasto = format_log_time(atividade['tini_log'], atividade['tfim_log'])
-        
-        if modulo_formatado not in resultado:
-            resultado[modulo_formatado] = {}
-        
-        if usuario not in resultado[modulo_formatado]:
-            resultado[modulo_formatado][usuario] = 0 
-               
-        resultado[modulo_formatado][usuario] += tempo_gasto 
-        
-    
-           
+    module_mapping = {
+        1: 'Contabil',
+        3: 'Honorarios',
+        4: 'Patrimonio',
+        5: 'Escrita Fiscal',
+        6: 'Lalur',
+        7: 'Atualizar',
+        8: 'Protocolos',
+        9: 'Administrar',
+        12: 'Folha',
+        13: 'Ponto Eletronico',
+        14: 'Auditoria',
+        15: 'Registro'
+    }
 
-    return JsonResponse(resultado, safe=False)
+    meses_abrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+                   'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+    try:
+        total = json.loads(get_atividades_usuario(start_date, end_date).content)
+        resultado = {"Atividades": {}}
+
+        for atividade in total:
+            usuario = atividade['usua_log']
+            modulo = atividade['sist_log']
+            tempo_gasto = format_log_time(atividade['tini_log'], atividade['tfim_log'])
+
+            data_log = datetime.strptime(atividade['data_log'], "%Y-%m-%d")
+            mes_abreviado = meses_abrev[data_log.month - 1]
+
+            modulo_nome = module_mapping.get(modulo, f"Modulo {modulo}")
+
+            if modulo_nome not in resultado["Atividades"]:
+                resultado["Atividades"][modulo_nome] = {}
+
+            if usuario not in resultado["Atividades"][modulo_nome]:
+                resultado["Atividades"][modulo_nome][usuario] = {}
+
+            if mes_abreviado not in resultado["Atividades"][modulo_nome][usuario]:
+                resultado["Atividades"][modulo_nome][usuario][mes_abreviado] = 0
+
+            resultado["Atividades"][modulo_nome][usuario][mes_abreviado] += tempo_gasto
+
+        return JsonResponse(resultado, safe=False)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
