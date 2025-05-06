@@ -79,22 +79,44 @@ def get_lancamentos_manuais(start_date, end_date):
 
 def get_lancamentos_usuario(start_date, end_date):
     try:
-        # Consultando a tabela de saídas e contando as ocorrências
         query = f"""
-            SELECT codi_usu, COUNT(*) AS total_ocorrencias
+            SELECT codi_usu, EXTRACT(MONTH FROM data_lan) AS mes, COUNT(*) AS total_ocorrencias
             FROM bethadba.ctlancto
             WHERE data_lan BETWEEN '{start_date}' AND '{end_date}'
-            GROUP BY codi_usu
-            ORDER BY total_ocorrencias DESC
+            GROUP BY codi_usu, mes
+            ORDER BY codi_usu, mes
         """
-        result= fetch_data(query)
+        result = fetch_data(query)
 
-        # Estruturando o resultado final com as três tabelas separadas
-        return JsonResponse(result, safe=False)
+        # Inicializa estrutura de dados
+        dados = {}
+
+        for row in result:
+            codi_usu = row['codi_usu']
+            mes = row['mes']
+            total = row['total_ocorrencias']
+            
+            if codi_usu not in dados:
+                dados[codi_usu] = {i: 0 for i in range(1, 13)}  # Inicializa todos os meses com 0
+            
+            dados[codi_usu][mes] += total
+
+        # Converte para lista formatada com nomes dos meses
+        meses_abrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+                       'jul', 'ago', 'set', 'out', 'nov', 'dez']
+        lancamentos_formatados = []
+
+        for codi_usu, meses_dict in dados.items():
+            item = {"codi_usu": codi_usu}
+            for i in range(1, 13):
+                item[meses_abrev[i - 1]] = meses_dict[i]
+            lancamentos_formatados.append(item)
+
+        return JsonResponse({"Lancamentos": lancamentos_formatados}, safe=False)
 
     except Exception as e:
-        # Retorna um erro caso haja algum problema
         return JsonResponse({"error": str(e)}, status=500)
+
 
 
 def get_lancamentos_empresa(start_date, end_date):
