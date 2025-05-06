@@ -106,7 +106,7 @@ def get_atividades_usuario_cliente(start_date, end_date):
 
             agrupado.append(empresa_dados)
 
-        return JsonResponse({"Atividades": agrupado}, safe=False)
+        return JsonResponse(agrupado, safe=False)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
