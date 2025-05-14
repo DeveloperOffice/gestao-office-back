@@ -43,8 +43,6 @@ def get_novos_mes(start_date, end_date):
         result1 = fetch_data(query1)
         result2 = fetch_data(query2)
 
-        print("Resultado da consulta1 (contagem de empresas):", result1)
-        print("Resultado da consulta2 (empresas):", result2)
 
         # Processa os resultados da consulta 1 (contagem de empresas)
         for row in result1:
