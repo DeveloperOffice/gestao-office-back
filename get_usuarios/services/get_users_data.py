@@ -4,10 +4,11 @@ from get_empresas.services.get_client_data import get_empresa
 import json
 from datetime import datetime
 
-#Função para formatar o formato do Horário em segundos
+
+# Função para formatar o formato do Horário em segundos
 def format_log_time(start_log, end_log):
     formato = "%H:%M:%S"
-    
+
     inicio = datetime.strptime(start_log, formato)
     fim = datetime.strptime(end_log, formato)
 
@@ -15,16 +16,22 @@ def format_log_time(start_log, end_log):
 
     return diferenca_em_segundos
 
+
 def get_lista_usuario():
     try:
-        query = 'SELECT i_usuario, i_confusuario, user_id, usa_modulo_web, usuario_modulo_web, senha_modulo_web, SITUACAO, NOME, USA_ONVIO, LOGIN_ONVIO_VALIDO, USUARIO_ONVIO, SENHA_ONVIO FROM bethadba.usConfUsuario'
+        query = """SELECT 
+                    i_usuario AS usuario, 
+                    i_confusuario AS id_usuario,
+                    SITUACAO AS situacao
+                    FROM bethadba.usConfUsuario WHERE tipo = 1"""
         result = fetch_data(query)
-        
+
     except Exception as e:
-        
+
         return JsonResponse({"error": str(e)}, status=500)
-    
+
     return JsonResponse(result, safe=False)
+
 
 def get_atividades_usuario(start_date, end_date):
     try:
@@ -35,7 +42,7 @@ def get_atividades_usuario(start_date, end_date):
         result = fetch_data(query)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-    
+
     return JsonResponse(result, safe=False)
 
 
@@ -44,17 +51,31 @@ def get_atividades_usuario_cliente(start_date, end_date):
         atividades = json.loads(get_atividades_usuario(start_date, end_date).content)
         empresas = json.loads(get_empresa().content)
 
-        meses_abrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-                       'jul', 'ago', 'set', 'out', 'nov', 'dez']
+        meses_abrev = [
+            "jan",
+            "fev",
+            "mar",
+            "abr",
+            "mai",
+            "jun",
+            "jul",
+            "ago",
+            "set",
+            "out",
+            "nov",
+            "dez",
+        ]
 
         resultado = {}
         meses_encontrados = set()
 
         for atividade in atividades:
-            usuario = atividade['usua_log']
-            empresa = atividade['codi_emp']
-            tempo_gasto = format_log_time(atividade['tini_log'], atividade['tfim_log'])
-            mes = int(datetime.strptime(atividade['data_log'], "%Y-%m-%d").strftime('%m'))
+            usuario = atividade["usua_log"]
+            empresa = atividade["codi_emp"]
+            tempo_gasto = format_log_time(atividade["tini_log"], atividade["tfim_log"])
+            mes = int(
+                datetime.strptime(atividade["data_log"], "%Y-%m-%d").strftime("%m")
+            )
 
             meses_encontrados.add(mes)
 
@@ -75,11 +96,7 @@ def get_atividades_usuario_cliente(start_date, end_date):
         agrupado = []
 
         for empresa, usuarios in resultado.items():
-            empresa_dados = {
-                "codi_emp": empresa,
-                "dados": [],
-                "tempo_gasto_total": 0
-            }
+            empresa_dados = {"codi_emp": empresa, "dados": [], "tempo_gasto_total": 0}
 
             for usuario, meses_dict in usuarios.items():
                 usuario_data = {"usuario": usuario}
@@ -94,14 +111,14 @@ def get_atividades_usuario_cliente(start_date, end_date):
                 empresa_dados["dados"].append(usuario_data)
                 empresa_dados["tempo_gasto_total"] += total_usuario
 
-            for empresa_info in empresas['Empresas']:
-                if empresa_info['codigo_empresa'] == empresa:
-                    empresa_dados["nome_empresa"] = empresa_info['nome_empresa']
+            for empresa_info in empresas["Empresas"]:
+                if empresa_info["codigo_empresa"] == empresa:
+                    empresa_dados["nome_empresa"] = empresa_info["nome_empresa"]
                     break
 
             empresa_dados = {
                 "nome_empresa": empresa_dados.get("nome_empresa", ""),
-                **empresa_dados
+                **empresa_dados,
             }
 
             agrupado.append(empresa_dados)
@@ -114,33 +131,45 @@ def get_atividades_usuario_cliente(start_date, end_date):
 
 def get_atividades_usuario_modulo(start_date, end_date):
     module_mapping = {
-        1: 'Contabil',
-        3: 'Honorarios',
-        4: 'Patrimonio',
-        5: 'Escrita Fiscal',
-        6: 'Lalur',
-        7: 'Atualizar',
-        8: 'Protocolos',
-        9: 'Administrar',
-        12: 'Folha',
-        13: 'Ponto Eletronico',
-        14: 'Auditoria',
-        15: 'Registro'
+        1: "Contabil",
+        3: "Honorarios",
+        4: "Patrimonio",
+        5: "Escrita Fiscal",
+        6: "Lalur",
+        7: "Atualizar",
+        8: "Protocolos",
+        9: "Administrar",
+        12: "Folha",
+        13: "Ponto Eletronico",
+        14: "Auditoria",
+        15: "Registro",
     }
 
-    meses_abrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-                   'jul', 'ago', 'set', 'out', 'nov', 'dez']
+    meses_abrev = [
+        "jan",
+        "fev",
+        "mar",
+        "abr",
+        "mai",
+        "jun",
+        "jul",
+        "ago",
+        "set",
+        "out",
+        "nov",
+        "dez",
+    ]
 
     try:
         total = json.loads(get_atividades_usuario(start_date, end_date).content)
         resultado = {"Atividades": {}}
 
         for atividade in total:
-            usuario = atividade['usua_log']
-            modulo = atividade['sist_log']
-            tempo_gasto = format_log_time(atividade['tini_log'], atividade['tfim_log'])
+            usuario = atividade["usua_log"]
+            modulo = atividade["sist_log"]
+            tempo_gasto = format_log_time(atividade["tini_log"], atividade["tfim_log"])
 
-            data_log = datetime.strptime(atividade['data_log'], "%Y-%m-%d")
+            data_log = datetime.strptime(atividade["data_log"], "%Y-%m-%d")
             mes_abreviado = meses_abrev[data_log.month - 1]
 
             modulo_nome = module_mapping.get(modulo, f"Modulo {modulo}")
