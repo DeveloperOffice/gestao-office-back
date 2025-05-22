@@ -153,7 +153,7 @@ def get_analise_usuario(start_date, end_date):
         SELECT codi_emp, codi_usu, data_lan AS data_ref, COUNT(*) AS total_ocorrencias
         FROM bethadba.ctlancto
         WHERE data_lan BETWEEN '{start_date}' AND '{end_date}'
-          AND origem_reg != 0
+          AND origem_reg = 0
         GROUP BY codi_emp, codi_usu, data_lan
         """
 
