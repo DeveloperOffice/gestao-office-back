@@ -1,12 +1,13 @@
 from django.http import JsonResponse
 from odbc_reader.services import fetch_data
 import logging
+from datetime import datetime, date
 
 logger = logging.getLogger(__name__)
 
 def get_analise_escritorio():
     try:
-        query = """
+        query_escritorios = """
         SELECT DISTINCT
             HRCLIENTE.CODI_EMP AS codigo_escritorio,
             HRCLIENTE.I_CLIENTE_FIXO AS codigo_empresa
@@ -14,22 +15,149 @@ def get_analise_escritorio():
         WHERE HRCLIENTE.I_CLIENTE_FIXO IS NOT NULL
         """
         
-        result = fetch_data(query)
+        query_faturamento = """
+        WITH escritorios AS (
+            SELECT DISTINCT CODI_EMP 
+            FROM bethadba.HRCLIENTE 
+            WHERE I_CLIENTE_FIXO IS NOT NULL
+        ),
+        dados_saidas AS (
+            SELECT 
+                e.codi_emp,
+                SUM(s.vcon_sai) as total_saidas
+            FROM escritorios e
+            LEFT JOIN bethadba.efsaidas s ON e.codi_emp = s.codi_emp
+            GROUP BY e.codi_emp
+        ),
+        dados_servicos AS (
+            SELECT 
+                e.codi_emp,
+                SUM(sv.vcon_ser) as total_servicos
+            FROM escritorios e
+            LEFT JOIN bethadba.efservicos sv ON e.codi_emp = sv.codi_emp
+            WHERE NOT EXISTS (
+                SELECT 1 
+                FROM bethadba.efsaidas s
+                WHERE s.codi_emp = sv.codi_emp
+                  AND s.dsai_sai = sv.dser_ser
+            )
+            GROUP BY e.codi_emp
+        )
+        SELECT 
+            ds.codi_emp,
+            COALESCE(ds.total_saidas, 0) as total_saidas,
+            COALESCE(dsv.total_servicos, 0) as total_servicos,
+            COALESCE(ds.total_saidas, 0) + COALESCE(dsv.total_servicos, 0) as total_faturamento
+        FROM dados_saidas ds
+        LEFT JOIN dados_servicos dsv ON ds.codi_emp = dsv.codi_emp
+        """
+
+        query_atividades = """
+        SELECT 
+            codi_emp,
+            SUM(
+                (HOUR(tfim_log) * 3600 + MINUTE(tfim_log) * 60 + SECOND(tfim_log)) -
+                (HOUR(tini_log) * 3600 + MINUTE(tini_log) * 60 + SECOND(tini_log))
+            ) as tempo_total_segundos
+        FROM bethadba.geloguser
+        GROUP BY codi_emp
+        """
+
+        query_lancamentos = """
+        SELECT 
+            codi_emp,
+            COUNT(*) as total_lancamentos
+        FROM bethadba.ctlancto
+        GROUP BY codi_emp
+        """
+
+        query_lancamentos_manuais = """
+        SELECT 
+            codi_emp,
+            COUNT(*) as total_lancamentos_manuais
+        FROM bethadba.ctlancto
+        WHERE origem_reg != 0
+        GROUP BY codi_emp
+        """
+
+        query_notas_fiscais = """
+        SELECT 
+            codi_emp,
+            COUNT(*) as total_notas_fiscais
+        FROM bethadba.efsaidas
+        GROUP BY codi_emp
+        """
+        
+        result_escritorios = fetch_data(query_escritorios)
+        result_faturamento = fetch_data(query_faturamento)
+        result_atividades = fetch_data(query_atividades)
+        result_lancamentos = fetch_data(query_lancamentos)
+        result_lancamentos_manuais = fetch_data(query_lancamentos_manuais)
+        result_notas_fiscais = fetch_data(query_notas_fiscais)
+        
+        # Criar dicionário de faturamento por empresa
+        faturamento_por_empresa = {
+            str(item['codi_emp']): float(item['total_faturamento'] or 0)
+            for item in result_faturamento
+        }
+
+        # Criar dicionário de tempo por empresa
+        tempo_por_empresa = {
+            str(item['codi_emp']): int(item['tempo_total_segundos'] or 0)
+            for item in result_atividades
+        }
+
+        # Criar dicionário de lançamentos por empresa
+        lancamentos_por_empresa = {
+            str(item['codi_emp']): int(item['total_lancamentos'] or 0)
+            for item in result_lancamentos
+        }
+
+        # Criar dicionário de lançamentos manuais por empresa
+        lancamentos_manuais_por_empresa = {
+            str(item['codi_emp']): int(item['total_lancamentos_manuais'] or 0)
+            for item in result_lancamentos_manuais
+        }
+
+        # Criar dicionário de notas fiscais por empresa
+        notas_fiscais_por_empresa = {
+            str(item['codi_emp']): int(item['total_notas_fiscais'] or 0)
+            for item in result_notas_fiscais
+        }
         
         # Criar dicionário para agrupar empresas por escritório
         escritorios_dict = {}
         
-        for item in result:
+        for item in result_escritorios:
             codigo_escritorio = item['codigo_escritorio']
             codigo_empresa = item['codigo_empresa']
             
             if codigo_escritorio not in escritorios_dict:
                 escritorios_dict[codigo_escritorio] = {
-                    'id': codigo_escritorio,
+                    'id_escritorio': codigo_escritorio,
+                    'total_empresas': 0,
+                    'faturamento': 0,
+                    'tempo_ativo_sistema': 0,
                     'empresas': []
                 }
             
-            escritorios_dict[codigo_escritorio]['empresas'].append(codigo_empresa)
+            # Adicionar empresa com seus lançamentos e notas fiscais
+            empresa_info = {
+                'id': codigo_empresa,
+                'lancamentos': lancamentos_por_empresa.get(str(codigo_empresa), 0),
+                'lancamentos_manuais': lancamentos_manuais_por_empresa.get(str(codigo_empresa), 0),
+                'notas_fiscais': notas_fiscais_por_empresa.get(str(codigo_empresa), 0)
+            }
+            escritorios_dict[codigo_escritorio]['empresas'].append(empresa_info)
+            escritorios_dict[codigo_escritorio]['total_empresas'] = len(escritorios_dict[codigo_escritorio]['empresas'])
+            
+            # Adicionar faturamento da empresa ao total do escritório
+            faturamento_empresa = faturamento_por_empresa.get(str(codigo_empresa), 0)
+            escritorios_dict[codigo_escritorio]['faturamento'] += faturamento_empresa
+
+            # Adicionar tempo de atividades da empresa ao total do escritório
+            tempo_empresa = tempo_por_empresa.get(str(codigo_empresa), 0)
+            escritorios_dict[codigo_escritorio]['tempo_ativo_sistema'] += tempo_empresa
         
         # Converter o dicionário em lista para retornar
         resultado_final = {
@@ -40,4 +168,4 @@ def get_analise_escritorio():
 
     except Exception as e:
         logger.error(f"Error in get_analise_escritorio: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500, safe=False)
+        return {"error": str(e)}
