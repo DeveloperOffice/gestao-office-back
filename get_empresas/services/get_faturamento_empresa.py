@@ -56,34 +56,27 @@ def get_faturamento(data_inicial, data_final):
             9: "set", 10: "out", 11: "nov", 12: "dez"
         }
 
-        # Determinar meses no intervalo - otimizado
         try:
             data_inicial_obj = datetime.strptime(data_inicial, '%Y-%m-%d').date()
             data_final_obj = datetime.strptime(data_final, '%Y-%m-%d').date()
             
-            # Pré-calcular os meses do período para evitar processamento repetitivo
             if data_inicial_obj.year == data_final_obj.year and data_inicial_obj.month == data_final_obj.month:
                 meses_periodo = {data_inicial_obj.month: meses[data_inicial_obj.month]}
             elif data_inicial_obj.year == data_final_obj.year:
                 meses_periodo = {m: nome for m, nome in meses.items() 
                                 if data_inicial_obj.month <= m <= data_final_obj.month}
             else:
-                # Para períodos que cruzam anos, otimizar o cálculo
                 meses_periodo = {}
-                # Ano inicial
                 for m in range(data_inicial_obj.month, 13):
                     meses_periodo[m] = meses[m]
-                # Ano final
                 for m in range(1, data_final_obj.month + 1):
                     meses_periodo[m] = meses[m]
         except ValueError:
             logger.warning("Erro ao processar datas. Usando todos os meses.")
             meses_periodo = meses
 
-        # Criar estrutura de resposta otimizada
         resultado = {}
         
-        # Processar dados já agregados - otimizado para minimizar operações
         for item in dados:
             codi_emp = str(item.get("codi_emp", ""))
             mes_num = int(item.get("mes", 0))
@@ -93,7 +86,6 @@ def get_faturamento(data_inicial, data_final):
                 
             mes_nome = meses_periodo[mes_num]
             
-            # Inicializar estrutura para a empresa se não existir
             if codi_emp not in resultado:
                 resultado[codi_emp] = {
                     "Faturamento": {
@@ -108,42 +100,32 @@ def get_faturamento(data_inicial, data_final):
             
             estrutura = resultado[codi_emp]["Faturamento"]
             
-            # Atualizar valores de saídas
             valor_saidas = float(item.get("total_saidas", 0))
             if valor_saidas > 0:
                 estrutura["Saidas"][mes_nome]["valor"] = str(valor_saidas)
                 
-                # Atualizar total de saídas
                 total_saidas = float(estrutura["Total"]["Total Saidas"])
                 estrutura["Total"]["Total Saidas"] = str(total_saidas + valor_saidas)
             
-            # Atualizar valores de serviços
             valor_servicos = float(item.get("total_servicos", 0))
             if valor_servicos > 0:
                 estrutura["servicos"][mes_nome]["valor"] = str(valor_servicos)
                 
-                # Atualizar total de serviços
                 total_servicos = float(estrutura["Total"]["Total servicos"])
                 estrutura["Total"]["Total servicos"] = str(total_servicos + valor_servicos)
 
-        # Calcular diferenças percentuais - otimizado
         for codi_emp, dados_empresa in resultado.items():
             faturamento = dados_empresa["Faturamento"]
             
-            # Ordenar meses para cálculo de diferenças
             meses_ordenados = sorted(meses_periodo.items(), key=lambda x: x[0])
             
-            # Calcular diferenças para Saidas e Serviços em um único loop
             for i, (mes_num, mes_nome) in enumerate(meses_ordenados):
                 if i == 0:
-                    # Primeiro mês não tem diferença
                     faturamento["Saidas"][mes_nome]["diferenca"] = "0%"
                     faturamento["servicos"][mes_nome]["diferenca"] = "0%"
                 else:
-                    # Calcular diferença em relação ao mês anterior
                     mes_anterior = meses_ordenados[i-1][1]
                     
-                    # Para Saidas
                     valor_atual = float(faturamento["Saidas"][mes_nome]["valor"])
                     valor_anterior = float(faturamento["Saidas"][mes_anterior]["valor"])
                     
@@ -153,7 +135,6 @@ def get_faturamento(data_inicial, data_final):
                     else:
                         faturamento["Saidas"][mes_nome]["diferenca"] = "0%"
                     
-                    # Para Serviços
                     valor_atual = float(faturamento["servicos"][mes_nome]["valor"])
                     valor_anterior = float(faturamento["servicos"][mes_anterior]["valor"])
                     
@@ -163,22 +144,19 @@ def get_faturamento(data_inicial, data_final):
                     else:
                         faturamento["servicos"][mes_nome]["diferenca"] = "0%"
 
-        # Informações de processamento simplificadas
         total_registros = len(dados)
         empresas_encontradas = len(resultado)
         
         logger.info(f"Total de registros: {total_registros}")
         logger.info(f"Empresas encontradas: {empresas_encontradas}")
 
-        # Reorganiza os dados para o frontend: lista com campo "codi_emp"
         dados_formatados = []
         for codi_emp, conteudo in resultado.items():
             dados_formatados.append({
                 "codi_emp": codi_emp,
-                **conteudo  # inclui "Faturamento": {...}
+                **conteudo  
             })
 
-        # Resposta otimizada em formato que facilita filtragem
         response_data = {
             "dados": dados_formatados,
             "info_processamento": {
