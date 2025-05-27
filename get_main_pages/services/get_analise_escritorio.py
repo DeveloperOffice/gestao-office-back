@@ -5,11 +5,8 @@ from datetime import datetime, date, timedelta
 
 logger = logging.getLogger(__name__)
 
-def get_analise_escritorio():
+def get_analise_escritorio(start_date, end_date):
     try:
-        current_date = datetime.now()
-        previous_month = current_date - timedelta(days=30)
-        
         query_escritorios = """
         SELECT DISTINCT
             HRCLIENTE.CODI_EMP AS codigo_escritorio,
@@ -67,7 +64,7 @@ def get_analise_escritorio():
                 SUM(s.vcon_sai) as total_saidas
             FROM escritorios e
             LEFT JOIN bethadba.efsaidas s ON e.codi_emp = s.codi_emp
-            WHERE s.dsai_sai >= '{previous_month.strftime('%Y-%m-%d')}'
+            WHERE s.dsai_sai >= '{start_date}'
             GROUP BY e.codi_emp
         ),
         dados_servicos_atual AS (
@@ -76,7 +73,7 @@ def get_analise_escritorio():
                 SUM(sv.vcon_ser) as total_servicos
             FROM escritorios e
             LEFT JOIN bethadba.efservicos sv ON e.codi_emp = sv.codi_emp
-            WHERE sv.dser_ser >= '{previous_month.strftime('%Y-%m-%d')}'
+            WHERE sv.dser_ser >= '{start_date}'
             AND NOT EXISTS (
                 SELECT 1 
                 FROM bethadba.efsaidas s
@@ -91,8 +88,8 @@ def get_analise_escritorio():
                 SUM(s.vcon_sai) as total_saidas
             FROM escritorios e
             LEFT JOIN bethadba.efsaidas s ON e.codi_emp = s.codi_emp
-            WHERE s.dsai_sai < '{previous_month.strftime('%Y-%m-%d')}'
-            AND s.dsai_sai >= '{previous_month.strftime('%Y-%m-%d')}'
+            WHERE s.dsai_sai < '{start_date}'
+            AND s.dsai_sai >= '{start_date}'
             GROUP BY e.codi_emp
         ),
         dados_servicos_anterior AS (
@@ -101,8 +98,8 @@ def get_analise_escritorio():
                 SUM(sv.vcon_ser) as total_servicos
             FROM escritorios e
             LEFT JOIN bethadba.efservicos sv ON e.codi_emp = sv.codi_emp
-            WHERE sv.dser_ser < '{previous_month.strftime('%Y-%m-%d')}'
-            AND sv.dser_ser >= '{previous_month.strftime('%Y-%m-%d')}'
+            WHERE sv.dser_ser < '{start_date}'
+            AND sv.dser_ser >= '{start_date}'
             AND NOT EXISTS (
                 SELECT 1 
                 FROM bethadba.efsaidas s
@@ -121,7 +118,7 @@ def get_analise_escritorio():
         FULL OUTER JOIN dados_servicos_anterior dsva ON dsa.codi_emp = dsva.codi_emp
         """
 
-        query_atividades = """
+        query_atividades = f"""
         SELECT 
             codi_emp,
             SUM(
@@ -129,39 +126,44 @@ def get_analise_escritorio():
                 (HOUR(tini_log) * 3600 + MINUTE(tini_log) * 60 + SECOND(tini_log))
             ) as tempo_total_segundos
         FROM bethadba.geloguser
+        WHERE tini_log BETWEEN '{start_date}' AND '{end_date}'
         GROUP BY codi_emp
         """
 
-        query_lancamentos = """
+        query_lancamentos = f"""
         SELECT 
             codi_emp,
             COUNT(*) as total_lancamentos
         FROM bethadba.ctlancto
+        WHERE data_lan BETWEEN '{start_date}' AND '{end_date}'
         GROUP BY codi_emp
         """
 
-        query_lancamentos_manuais = """
+        query_lancamentos_manuais = f"""
         SELECT 
             codi_emp,
             COUNT(*) as total_lancamentos_manuais
         FROM bethadba.ctlancto
-        WHERE origem_reg != 0
+        WHERE data_lan BETWEEN '{start_date}' AND '{end_date}'
+          AND origem_reg != 0
         GROUP BY codi_emp
         """
 
-        query_notas_fiscais = """
+        query_notas_fiscais = f"""
         SELECT 
             codi_emp,
             COUNT(*) as total_notas_fiscais
         FROM bethadba.efsaidas
+        WHERE dsai_sai BETWEEN '{start_date}' AND '{end_date}'
         GROUP BY codi_emp
         """
 
-        query_notas_fiscais_entrada = """
+        query_notas_fiscais_entrada = f"""
         SELECT 
             codi_emp,
             COUNT(*) as total_notas_fiscais_entrada
         FROM bethadba.efentradas
+        WHERE dent_ent BETWEEN '{start_date}' AND '{end_date}'
         GROUP BY codi_emp
         """
 
