@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from datetime import datetime
 from rest_framework.permissions import IsAuthenticated
-from get_empresas.services.get_faturamente_empresa import get_faturamento
+from get_empresas.services.get_faturamento_empresa import get_faturamento
 import json
 
 
