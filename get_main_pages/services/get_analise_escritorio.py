@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta, date
 import json
 from get_main_pages.services.get_faturamento import get_faturamento
+from get_main_pages.services.get_atividades_empresa import get_atividades_empresa_mes
 logger = logging.getLogger(__name__)
 
 # Mês abreviado → número
@@ -184,6 +185,7 @@ def get_analise_escritorio(start_date, end_date):
 
         meses = gerar_meses_em_portugues(start_date, end_date)
         faturamento_result = get_faturamento(start_date, end_date)
+        atividades_result = get_atividades_empresa_mes(start_date, end_date)
 
         # Verificar se o resultado é um JsonResponse (erro)
         if isinstance(faturamento_result, JsonResponse):
@@ -272,12 +274,22 @@ def get_analise_escritorio(start_date, end_date):
                 {"codi_emp": escritorio["codigo_escritorio"], "faturamento": {}}
             )
 
+            # Encontrar as atividades deste escritório
+            codigo_escritorio_int = escritorio["codigo_escritorio"]
+            atividades_escritorio = atividades_result.get(codigo_escritorio_int, {})
+            
+            # Criar dicionário de tempo ativo com os valores originais
+            tempo_ativo = {}
+            for mes in meses:
+                tempo_ativo[mes] = atividades_escritorio.get(mes, 0)
+
             resultados.append({
                 "escritorio": str(escritorio["nome"]),
                 "codigo": int(escritorio["codigo_escritorio"]),
                 "clientes": {str(k): int(v) for k, v in contagem_mes.items()},
                 "importacoes": dados_importacoes,
-                "faturamento": faturamento_escritorio["faturamento"]
+                "faturamento": faturamento_escritorio["faturamento"],
+                "tempo_ativo": tempo_ativo
             })
 
         return resultados
