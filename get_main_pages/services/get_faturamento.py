@@ -216,7 +216,7 @@ def get_faturamento_teste(start_date, end_date):
             except (InvalidOperation, ValueError, TypeError):
                 valor_num = Decimal('0.00')
             soma += valor_num
-            print(soma)
+        print(soma)
 
     if not result:
         return JsonResponse({"message": "Nenhum dado encontrado"}, status=404)
