@@ -3,7 +3,7 @@ from odbc_reader.services import fetch_data
 import logging
 from datetime import datetime, timedelta, date
 import json
-
+from get_main_pages.services.get_faturamento import get_faturamento
 logger = logging.getLogger(__name__)
 
 # Mês abreviado → número
@@ -175,7 +175,6 @@ def get_analise_escritorio(start_date, end_date):
         GROUP BY codi_emp, data_lan
         """
 
-        # Executar queries
         clientes = fetch_data(query_clientes)
         saidas = agrupar_por_empresa_mes(fetch_data(query_saida), "data_ref")
         entradas = agrupar_por_empresa_mes(fetch_data(query_entrada), "data_ref")
@@ -183,10 +182,24 @@ def get_analise_escritorio(start_date, end_date):
         lancamentos = agrupar_por_empresa_mes(fetch_data(query_lancamentos), "data_ref")
         lancamentos_manuais = agrupar_por_empresa_mes(fetch_data(query_lancamentos_manuais), "data_ref")
 
-        # Gerar meses para análise
         meses = gerar_meses_em_portugues(start_date, end_date)
+        faturamento_result = get_faturamento(start_date, end_date)
 
-        # Exemplo de contagem
+        # Verificar se o resultado é um JsonResponse (erro)
+        if isinstance(faturamento_result, JsonResponse):
+            logger.error(f"Erro ao buscar faturamento: {faturamento_result.content}")
+            faturamento = []
+        else:
+            faturamento = faturamento_result
+
+        # Criar dicionário de faturamento por empresa
+        faturamento_por_empresa = {}
+        for item in faturamento:
+            if isinstance(item, dict):  # Verificar se é um dicionário válido
+                codi_emp = str(item.get("codi_emp"))
+                if codi_emp and "faturamento" in item:
+                    faturamento_por_empresa[codi_emp] = item["faturamento"]
+
         resultados = []
 
         for escritorio in listaEscritorios:
@@ -208,6 +221,7 @@ def get_analise_escritorio(start_date, end_date):
                 "servicos": {},
                 "lancamentos": {},
                 "lancamentos_manuais": {},
+                "porcentagem_lancamentos_manuais": {},
                 "total_entradas": 0,
                 "total_saidas": 0,
                 "total_servicos": 0,
@@ -224,11 +238,26 @@ def get_analise_escritorio(start_date, end_date):
                 dados_importacoes["lancamentos"][mes] = lancamentos.get(escritorio["codigo_escritorio"], {}).get(mes, 0)
                 dados_importacoes["lancamentos_manuais"][mes] = lancamentos_manuais.get(escritorio["codigo_escritorio"], {}).get(mes, 0)
 
+                # Calcular porcentagem de lançamentos manuais para o mês
+                total_lancamentos_mes = dados_importacoes["lancamentos"][mes]
+                if total_lancamentos_mes > 0:
+                    porcentagem = (dados_importacoes["lancamentos_manuais"][mes] / total_lancamentos_mes) * 100
+                    dados_importacoes["porcentagem_lancamentos_manuais"][mes] = f"{porcentagem:.1f}%"
+                else:
+                    dados_importacoes["porcentagem_lancamentos_manuais"][mes] = "0%"
+
                 dados_importacoes["total_entradas"] += dados_importacoes["entradas"][mes]
                 dados_importacoes["total_saidas"] += dados_importacoes["saidas"][mes]
                 dados_importacoes["total_servicos"] += dados_importacoes["servicos"][mes]
                 dados_importacoes["total_lancamentos"] += dados_importacoes["lancamentos"][mes]
                 dados_importacoes["total_lancamentos_manuais"] += dados_importacoes["lancamentos_manuais"][mes]
+
+            # Calcular porcentagem total de lançamentos manuais
+            if dados_importacoes["total_lancamentos"] > 0:
+                porcentagem_total = (dados_importacoes["total_lancamentos_manuais"] / dados_importacoes["total_lancamentos"]) * 100
+                dados_importacoes["porcentagem_total_lancamentos_manuais"] = f"{porcentagem_total:.1f}%"
+            else:
+                dados_importacoes["porcentagem_total_lancamentos_manuais"] = "0%"
 
             dados_importacoes["total_geral"] = (
                 dados_importacoes["total_entradas"] +
@@ -237,15 +266,22 @@ def get_analise_escritorio(start_date, end_date):
                 dados_importacoes["total_lancamentos"]
             )
 
+            # Encontrar o faturamento específico deste escritório
+            faturamento_escritorio = next(
+                (item for item in faturamento_result if str(item.get("codi_emp")) == str(escritorio["codigo_escritorio"])),
+                {"codi_emp": escritorio["codigo_escritorio"], "faturamento": {}}
+            )
+
             resultados.append({
                 "escritorio": str(escritorio["nome"]),
                 "codigo": int(escritorio["codigo_escritorio"]),
                 "clientes": {str(k): int(v) for k, v in contagem_mes.items()},
-                "importacoes": dados_importacoes
+                "importacoes": dados_importacoes,
+                "faturamento": faturamento_escritorio["faturamento"]
             })
 
         return resultados
 
     except Exception as e:
         logger.error(f"Erro em get_analise_escritorio: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return {"error": str(e)}
