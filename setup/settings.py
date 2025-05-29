@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "get_folha",
     "get_main_pages",
     "authenticator",
+    "drf_spectacular",
 ]
 
 
@@ -96,8 +97,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Gestão Office API",
+    "DESCRIPTION": "Documentação automática e interativa da API",
+    "VERSION": "1.0.0",
+    # você pode customizar tags, servidores, segurança etc.
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
