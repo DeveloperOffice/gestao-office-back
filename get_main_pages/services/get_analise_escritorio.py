@@ -240,6 +240,15 @@ def get_analise_escritorio(start_date, end_date):
                 if codi_emp and "faturamento" in item:
                     faturamento_por_empresa[codi_emp] = item["faturamento"]
 
+        # Criar dicionário para mapear empresas por escritório
+        empresas_por_escritorio = {}
+        for cliente in clientes:
+            escritorio = cliente["escritorio"]
+            empresa = cliente["id_empresa"]
+            if escritorio not in empresas_por_escritorio:
+                empresas_por_escritorio[escritorio] = set()
+            empresas_por_escritorio[escritorio].add(empresa)
+
         resultados = []
 
         for escritorio in listaEscritorios:
@@ -306,22 +315,22 @@ def get_analise_escritorio(start_date, end_date):
                 dados_importacoes["total_lancamentos"]
             )
 
-            # Encontrar o faturamento específico deste escritório
             faturamento_escritorio = next(
                 (item for item in faturamento_result if str(item.get("codi_emp")) == str(escritorio["codigo_escritorio"])),
                 {"codi_emp": escritorio["codigo_escritorio"], "faturamento": {}}
             )
 
-            # Encontrar as atividades deste escritório
             codigo_escritorio_int = escritorio["codigo_escritorio"]
-            atividades_escritorio = atividades_result.get(codigo_escritorio_int, {})
             
-            # Criar dicionário de tempo ativo com os valores originais
-            tempo_ativo = {}
-            for mes in meses:
-                tempo_ativo[mes] = atividades_escritorio.get(mes, 0)
+            tempo_ativo = {mes: 0 for mes in meses}
+            
+            # Somar tempo ativo apenas das empresas do escritório
+            empresas_do_escritorio = empresas_por_escritorio.get(codigo_escritorio_int, set())
+            for empresa in empresas_do_escritorio:
+                if empresa in atividades_result:
+                    for mes in meses:
+                        tempo_ativo[mes] += atividades_result.get(empresa, {}).get(mes, 0)
 
-            # Adicionar vínculos de folha ativos
             vinculos_folha_escritorio = {}
             for mes in meses:
                 vinculos_folha_escritorio[mes] = vinculos_por_empresa_mes.get(codigo_escritorio_int, {}).get(mes, 0)
