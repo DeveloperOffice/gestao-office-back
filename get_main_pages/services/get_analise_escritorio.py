@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from odbc_reader.services import fetch_data
 import logging
 from datetime import datetime, timedelta, date
+from dateutil.relativedelta import relativedelta
 import json
 from get_main_pages.services.get_faturamento import get_faturamento
 from get_main_pages.services.get_atividades_empresa import get_atividades_empresa_mes
@@ -22,19 +23,17 @@ def esta_dentro_intervalo(mes_ano: str, start_date, end_date) -> bool:
         mes_abrev, ano_str = mes_ano.lower().split('/')
         mes = MESES_PT.get(mes_abrev)
         if mes is None:
-            logger.error(f"Mes inválido recebido: {mes_abrev}")
+            logger.error(f"Mês inválido recebido: {mes_abrev}")
             return False
         ano = int(ano_str)
 
         inicio_mes = datetime(ano, mes, 1)
-        fim_mes = (datetime(ano + 1, 1, 1) - timedelta(days=1)) if mes == 12 else (datetime(ano, mes + 1, 1) - timedelta(days=1))
+        fim_mes = (inicio_mes + relativedelta(months=1)) - timedelta(days=1)
 
-        # Se qualquer data for None, retorna False imediatamente
         if start_date is None or end_date is None:
             logger.error(f"Datas None detectadas: start_date={start_date}, end_date={end_date}")
             return False
 
-        # Tratar start_date
         if isinstance(start_date, str):
             if start_date.lower() == 'nada':
                 return False
@@ -42,18 +41,12 @@ def esta_dentro_intervalo(mes_ano: str, start_date, end_date) -> bool:
         elif isinstance(start_date, date) and not isinstance(start_date, datetime):
             start_date = datetime.combine(start_date, datetime.min.time())
 
-        # Tratar end_date
         if isinstance(end_date, str):
             if end_date.lower() == 'nada':
                 return fim_mes >= start_date
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         elif isinstance(end_date, date) and not isinstance(end_date, datetime):
             end_date = datetime.combine(end_date, datetime.min.time())
-
-        # Finalmente, verifica se inicio_mes <= end_date e fim_mes >= start_date
-        if inicio_mes is None or end_date is None or fim_mes is None or start_date is None:
-            logger.error("Variável None inesperada nas datas finais")
-            return False
 
         return inicio_mes <= end_date and fim_mes >= start_date
 
@@ -71,11 +64,7 @@ def gerar_meses_em_portugues(start_date: str, end_date: str):
         while atual <= data_fim:
             mes_ano = f"{MESES_NUM_TO_STR[atual.month]}/{atual.year}"
             meses_formatados.append(mes_ano)
-
-            if atual.month == 12:
-                atual = atual.replace(year=atual.year + 1, month=1)
-            else:
-                atual = atual.replace(month=atual.month + 1)
+            atual += relativedelta(months=1)
 
         return meses_formatados
 
@@ -115,7 +104,56 @@ def get_analise_escritorio(start_date, end_date):
             INNER JOIN bethadba.geempre ON geempre.codi_emp = HRCLIENTE.CODI_EMP 
             WHERE HRCLIENTE.I_CLIENTE_FIXO IS NOT NULL
         """
+
+        # Query para vínculos de folha ativos
+        query_vinculos_folha = f"""
+        SELECT 
+            foempregados.codi_emp,
+            foempregados.admissao,
+            forescisoes.demissao,
+            MONTH(foempregados.admissao) as mes_admissao,
+            YEAR(foempregados.admissao) as ano_admissao,
+            MONTH(forescisoes.demissao) as mes_demissao,
+            YEAR(forescisoes.demissao) as ano_demissao
+        FROM bethadba.foempregados
+        LEFT JOIN bethadba.forescisoes ON 
+            foempregados.codi_emp = forescisoes.codi_emp AND 
+            foempregados.i_empregados = forescisoes.i_empregados
+        WHERE foempregados.admissao IS NOT NULL
+        """
+
         escritorios_raw = fetch_data(query_escritorios)
+        vinculos_folha = fetch_data(query_vinculos_folha)
+
+        # Processar vínculos de folha por mês
+        vinculos_por_empresa_mes = {}
+        for vinculo in vinculos_folha:
+            codi_emp = vinculo["codi_emp"]
+            if codi_emp not in vinculos_por_empresa_mes:
+                vinculos_por_empresa_mes[codi_emp] = {}
+
+            data_admissao = vinculo["admissao"]
+            if isinstance(data_admissao, date) and not isinstance(data_admissao, datetime):
+                data_admissao = datetime.combine(data_admissao, datetime.min.time())
+
+            data_demissao = vinculo["demissao"]
+            if data_demissao is None:
+                data_demissao = datetime.now()
+            elif isinstance(data_demissao, date) and not isinstance(data_demissao, datetime):
+                data_demissao = datetime.combine(data_demissao, datetime.min.time())
+
+            data_atual = data_admissao.replace(day=1)
+            data_demissao = data_demissao.replace(day=1)
+
+            while data_atual <= data_demissao:
+                mes_ano = f"{MESES_NUM_TO_STR[data_atual.month]}/{data_atual.year}"
+                
+                if mes_ano not in vinculos_por_empresa_mes[codi_emp]:
+                    vinculos_por_empresa_mes[codi_emp][mes_ano] = 0
+                
+                vinculos_por_empresa_mes[codi_emp][mes_ano] += 1
+
+                data_atual += relativedelta(months=1)
 
         listaEscritorios = []
         codigos_existentes = set()
@@ -283,13 +321,19 @@ def get_analise_escritorio(start_date, end_date):
             for mes in meses:
                 tempo_ativo[mes] = atividades_escritorio.get(mes, 0)
 
+            # Adicionar vínculos de folha ativos
+            vinculos_folha_escritorio = {}
+            for mes in meses:
+                vinculos_folha_escritorio[mes] = vinculos_por_empresa_mes.get(codigo_escritorio_int, {}).get(mes, 0)
+
             resultados.append({
                 "escritorio": str(escritorio["nome"]),
                 "codigo": int(escritorio["codigo_escritorio"]),
                 "clientes": {str(k): int(v) for k, v in contagem_mes.items()},
                 "importacoes": dados_importacoes,
                 "faturamento": faturamento_escritorio["faturamento"],
-                "tempo_ativo": tempo_ativo
+                "tempo_ativo": tempo_ativo,
+                "vinculos_folha_ativos": vinculos_folha_escritorio
             })
 
         return resultados
