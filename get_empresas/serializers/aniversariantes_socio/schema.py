@@ -1,5 +1,5 @@
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from get_main_pages.serializers.analise_cliente.cliente import (
+from get_main_pages.serializers.analise_cliente.serializer import (
     AnaliseClienteRequestSerializer,
     AnaliseClienteResponseSerializer,
 )

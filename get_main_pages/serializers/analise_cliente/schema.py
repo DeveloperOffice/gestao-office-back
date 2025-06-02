@@ -1,5 +1,5 @@
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from get_main_pages.serializers.analise_cliente.cliente import (
+from get_main_pages.serializers.analise_cliente.serializer import (
     AnaliseClienteRequestSerializer,
     AnaliseClienteResponseSerializer,
 )
@@ -33,9 +33,9 @@ ANALISE_CLIENTE_SCHEMA = {
                     "responsavel": "RESPONSÁVEL LEGAL DA EMPRESA EXEMPLO",
                     "escritorios": [
                         {"escritorio": 75, "id_cliente": 851, "valor_contrato": None},
-                        {"escritorio": 638, "id_cliente": 851, "valor_contrato": None},
+                        {"escritorio": 638, "id_cliente": 851, "valor_contrato": 1234.80},
                         {"escritorio": 699, "id_cliente": 851, "valor_contrato": None},
-                        {"escritorio": 591, "id_cliente": 851, "valor_contrato": None},
+                        {"escritorio": 591, "id_cliente": 851, "valor_contrato": 123.34},
                     ],
                     "faturamento": {
                         "jan/2024": [6700.0, "0%"],
