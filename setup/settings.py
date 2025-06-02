@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "get_folha",
     "get_main_pages",
     "authenticator",
+    "get_api_token",
     "drf_spectacular",
 ]
 

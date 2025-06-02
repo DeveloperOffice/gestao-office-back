@@ -1,8 +1,7 @@
 from django.contrib import admin
-from django.urls import path, include, re_path
+from django.urls import path, include
 from django.http import JsonResponse
-from rest_framework.authtoken.views import obtain_auth_token
-
+from get_api_token.views import CustomObtainAuthToken
 from django.urls import path, include
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -18,13 +17,7 @@ urlpatterns = [
     path("", sucess),
     path("login/", include("authenticator.urls")),
     path("admin", admin.site.urls),
-]
-
-urlpatterns = [
-    path("", sucess),
-    path("login/", include("authenticator.urls")),
-    path("admin", admin.site.urls),
-    path("api/token", obtain_auth_token),
+    path("api/token", CustomObtainAuthToken.as_view(), name="obtain-token"),
     path("empresa/", include("get_empresas.urls")),
     path("folha/", include("get_folha.urls")),
     path("usuarios/", include("get_usuarios.urls")),
