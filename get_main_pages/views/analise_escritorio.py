@@ -4,8 +4,12 @@ from rest_framework.permissions import IsAuthenticated
 from get_main_pages.services.get_analise_escritorio import get_analise_escritorio
 import logging
 
+from drf_spectacular.utils import extend_schema
+from get_main_pages.serializers.analise_escritorio.schema import ESCRITORIOS_SCHEMA
+
 logger = logging.getLogger(__name__)
 
+@extend_schema(**ESCRITORIOS_SCHEMA)
 class get_escritorios(APIView):
     permission_classes = [IsAuthenticated]
 

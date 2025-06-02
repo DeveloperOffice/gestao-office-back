@@ -5,7 +5,8 @@ from get_main_pages.serializers.analise_cliente.serializer import (
 )
 
 ANALISE_CLIENTE_SCHEMA = {
-    "summary": "Análise de Cliente por período",
+    "tags":["Completos"],
+    "summary": "Análise de atividade de Cliente por período",
     "description": "Recebe start_date, end_date e api_token e retorna métricas por empresa.",
     "request": AnaliseClienteRequestSerializer,
     "responses": {200: AnaliseClienteResponseSerializer(many=True)},

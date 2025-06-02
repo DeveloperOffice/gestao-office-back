@@ -6,8 +6,10 @@ from get_main_pages.services.get_analise_usuario import (
     get_analise_usuario,
     get_analise_por_sistema,
 )
+from drf_spectacular.utils import extend_schema
+from get_main_pages.serializers.analise_usuario.schema import USUARIOS_SCHEMA
 
-
+@extend_schema(**USUARIOS_SCHEMA)
 class get_analise_usuarios(APIView):
     permission_classes = [IsAuthenticated]
 
