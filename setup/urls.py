@@ -14,6 +14,11 @@ from drf_spectacular.views import (
 def sucess(request):
     return JsonResponse({"conection": "success"}, status=200)
 
+urlpatterns = [
+    path("", sucess),
+    path("login/", include("authenticator.urls")),
+    path("admin", admin.site.urls),
+]
 
 urlpatterns = [
     path("", sucess),
