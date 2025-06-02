@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from get_empresas.services.get_socios_aniversariantes import get_socio_aniversariante
-from get_empresas.serializers.aniversariantes.schema import ANIVERSARIANTES
-from get_empresas.serializers.aniversariantes.serializer import AniversarianteResponseSerializer, AniversariantesRequestSerializer
+from get_empresas.serializers.aniversariantes_socio.schema import ANIVERSARIANTES
+from get_empresas.serializers.aniversariantes_socio.serializer import AniversarianteResponseSerializer, AniversariantesRequestSerializer
 
 from drf_spectacular.utils import extend_schema
 
