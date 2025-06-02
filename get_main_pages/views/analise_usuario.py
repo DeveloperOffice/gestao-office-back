@@ -6,8 +6,11 @@ from get_main_pages.services.get_analise_usuario import (
     get_analise_usuario,
     get_analise_por_sistema,
 )
+from drf_spectacular.utils import extend_schema
+from get_main_pages.serializers.analise_usuario.schema import USUARIOS_SCHEMA
+from get_main_pages.serializers.analise_usuario_modulo.schema import MODULOS_SCHEMA
 
-
+@extend_schema(**USUARIOS_SCHEMA)
 class get_analise_usuarios(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -35,7 +38,7 @@ class get_analise_usuarios(APIView):
         result = get_analise_usuario(start_date, end_date)
         return result
 
-
+@extend_schema(**MODULOS_SCHEMA)
 class get_analise_usuario_modulo(APIView):
     permission_classes = [IsAuthenticated]
 

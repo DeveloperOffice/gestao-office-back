@@ -2,11 +2,12 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from authenticator.services import login_manager
-
+from drf_spectacular.utils import extend_schema
 
 class get_login(APIView):
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(exclude=True) #Excluir do swagger
     def post(self, request):
         if request.method != 'POST':
             return JsonResponse({"error": "Método não permitido, use POST"}, status=405)

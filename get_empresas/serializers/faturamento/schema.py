@@ -1,0 +1,122 @@
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from get_empresas.serializers.faturamento.serializer import (
+    FaturamentoRequestSerializer,
+    FaturamentoResponseSerializer,
+)
+
+FATURAMENTO_SCHEMA = {
+    "tags": ["Empresa"],
+    "summary": "Lista do faturamento de todas as empresas de um determinado periodo",
+    "description": "Retorna todos os dados de faturamento das empresas no intervalo de datas informadas",
+    "request": FaturamentoRequestSerializer,
+    "responses": {200: FaturamentoResponseSerializer},
+    "examples": [
+        OpenApiExample(
+            "Exemplo de Request",
+            value={
+                "api_token": "79f7db4785845f5fa117dc3a0951241bc50d2d81841be",
+                "start_date": "2024-01-01",
+                "end_date": "2024-12-31",
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            "Exemplo de Response",
+            value={
+                "dados": [
+                    {
+                        "codi_emp": "2",
+                        "Faturamento": {
+                            "Saidas": {
+                                "jan": {"valor": "3149802.36", "diferenca": "0%"},
+                                "fev": {"valor": "2132609.62", "diferenca": "-32.29%"},
+                                "mar": {"valor": "2798494.21", "diferenca": "31.22%"},
+                                "abr": {"valor": "2730206.96", "diferenca": "-2.44%"},
+                                "mai": {"valor": "3912435.76", "diferenca": "43.30%"},
+                                "jun": {"valor": "2959983.52", "diferenca": "-24.34%"},
+                                "jul": {"valor": "2696693.01", "diferenca": "-8.89%"},
+                                "ago": {"valor": "3912609.43", "diferenca": "45.09%"},
+                                "set": {"valor": "2828127.16", "diferenca": "-27.72%"},
+                                "out": {"valor": "2170227.98", "diferenca": "-23.26%"},
+                                "nov": {"valor": "3282145.73", "diferenca": "51.24%"},
+                                "dez": {"valor": "2939201.16", "diferenca": "-10.45%"},
+                            },
+                            "servicos": {
+                                "jan": {"valor": "0", "diferenca": "0%"},
+                                "fev": {"valor": "0", "diferenca": "0%"},
+                                "mar": {"valor": "0", "diferenca": "0%"},
+                                "abr": {"valor": "0", "diferenca": "0%"},
+                                "mai": {"valor": "0", "diferenca": "0%"},
+                                "jun": {"valor": "0", "diferenca": "0%"},
+                                "jul": {"valor": "0", "diferenca": "0%"},
+                                "ago": {"valor": "0", "diferenca": "0%"},
+                                "set": {"valor": "0", "diferenca": "0%"},
+                                "out": {"valor": "0", "diferenca": "0%"},
+                                "nov": {"valor": "0", "diferenca": "0%"},
+                                "dez": {"valor": "0", "diferenca": "0%"},
+                            },
+                            "Total": {
+                                "Total Saidas": "35512536.9",
+                                "Total servicos": "0",
+                            },
+                        },
+                    },
+                    {
+                        "codi_emp": "6",
+                        "Faturamento": {
+                            "Saidas": {
+                                "jan": {"valor": "0", "diferenca": "0%"},
+                                "fev": {"valor": "0", "diferenca": "0%"},
+                                "mar": {"valor": "0", "diferenca": "0%"},
+                                "abr": {"valor": "0", "diferenca": "0%"},
+                                "mai": {"valor": "0", "diferenca": "0%"},
+                                "jun": {"valor": "0", "diferenca": "0%"},
+                                "jul": {"valor": "0", "diferenca": "0%"},
+                                "ago": {"valor": "0", "diferenca": "0%"},
+                                "set": {"valor": "0", "diferenca": "0%"},
+                                "out": {"valor": "0", "diferenca": "0%"},
+                                "nov": {"valor": "0", "diferenca": "0%"},
+                                "dez": {"valor": "0", "diferenca": "0%"},
+                            },
+                            "servicos": {
+                                "jan": {"valor": "6700.0", "diferenca": "0%"},
+                                "fev": {"valor": "10800.0", "diferenca": "61.19%"},
+                                "mar": {"valor": "0", "diferenca": "-100.00%"},
+                                "abr": {"valor": "0", "diferenca": "0%"},
+                                "mai": {"valor": "0", "diferenca": "0%"},
+                                "jun": {"valor": "0", "diferenca": "0%"},
+                                "jul": {"valor": "0", "diferenca": "0%"},
+                                "ago": {"valor": "0", "diferenca": "0%"},
+                                "set": {"valor": "0", "diferenca": "0%"},
+                                "out": {"valor": "3000.0", "diferenca": "0%"},
+                                "nov": {"valor": "3000.0", "diferenca": "0.00%"},
+                                "dez": {"valor": "3000.0", "diferenca": "0.00%"},
+                            },
+                            "Total": {"Total Saidas": "0", "Total servicos": "26500.0"},
+                        },
+                    },
+                ],
+                "info_processamento": {
+                    "total_registros": 247,
+                    "empresas_encontradas": 247,
+                    "meses_periodo": [
+                        "jan",
+                        "fev",
+                        "mar",
+                        "abr",
+                        "mai",
+                        "jun",
+                        "jul",
+                        "ago",
+                        "set",
+                        "out",
+                        "nov",
+                        "dez",
+                    ],
+                },
+            },
+            response_only=True,
+            status_codes=["200"],
+        ),
+    ],
+}

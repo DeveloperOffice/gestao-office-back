@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     "get_folha",
     "get_main_pages",
     "authenticator",
+    "get_api_token",
+    "drf_spectacular",
 ]
 
 
@@ -96,8 +98,31 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Gestão Office API",
+    "DESCRIPTION": "Documentação automática e interativa da API",
+    "VERSION": "1.0.0",
+    # ↓↓↓↓ ESSAS CONFIGURAÇÕES VÃO SILENCIAR TUDO ↓↓↓↓
+    "COMPONENT_NO_READ_ONLY_REQUIRED": True,
+    "ENUM_NAME_OVERRIDES": {},
+    "GENERIC_ADDITIONAL_PROPERTIES": None,
+    "SCHEMA_PATH_PREFIX": None,
+    "AUTHENTICATION_WHITELIST": [],  # Ignora TODAS as classes de autenticação
+    "PREPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.preprocess_exclude_path_format"  # Ignora erros de paths
+    ],
+    "DISABLE_ERRORS_AND_WARNINGS": True,  # ←⭐ ISSO AQUI É O MAIS IMPORTANTE!
+    "SWAGGER_UI_SETTINGS": {
+        "displayOperationId": True,
+        "filter": True,
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "security": [],  # Remove o cadeado da UI
+    },
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {

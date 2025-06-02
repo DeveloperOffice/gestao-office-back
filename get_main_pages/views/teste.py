@@ -6,10 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from get_main_pages.services.get_faturamento import get_faturamento_teste
 import json
 
+from drf_spectacular.utils import extend_schema
 
 class get_teste(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(exclude=True)
     def post(self, request):
         if request.method != 'POST':
             return JsonResponse({"error": "Método não permitido, use POST"}, status=405)
