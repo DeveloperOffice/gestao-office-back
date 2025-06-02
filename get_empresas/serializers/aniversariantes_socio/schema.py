@@ -7,7 +7,7 @@ from get_main_pages.serializers.analise_cliente.cliente import (
 
 ANIVERSARIANTES = {
     "tags":["Empresa"],
-    "summary": "Lista de Sócios Aniversáriantes",
+    "summary": "Lista de Sócios Aniversariantes",
     "description": "Recebe apenas a api_token e retorna todos os aniversáriantes do mês atual.",
     "request": AnaliseClienteRequestSerializer,
     "responses": {200: AnaliseClienteResponseSerializer(many=True)},

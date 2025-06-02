@@ -4,7 +4,7 @@ from get_empresas.serializers.aniversariantes_empresa.serializer import Aniversa
 
 ANIVERSARIOS_EMPRESA = {
     "tags": ["Empresa"],
-    "summary": "Lista de Empresas Aniversáriantes.",
+    "summary": "Lista de Empresas Aniversariantes.",
     "description": "Recebe apenas a api_token e retorna todas as empresas com aniversário de cadastro no mês atual.",
     "request": AniversariosCadastroRequestSerializer,
     "responses": {200: AniversariosCadastroResponseSerializer(many=True)},
