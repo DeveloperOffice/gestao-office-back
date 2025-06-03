@@ -22,6 +22,8 @@ urlpatterns = [
     path("folha/", include("get_folha.urls")),
     path("usuarios/", include("get_usuarios.urls")),
     path("main/", include("get_main_pages.urls")),
+    
+    
     # 1) Gera o JSON do esquema OpenAPI
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # 2) Swagger UI (interface web interativa)
