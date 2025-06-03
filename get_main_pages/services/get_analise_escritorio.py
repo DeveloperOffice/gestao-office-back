@@ -4,8 +4,8 @@ import logging
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 import json
-from get_main_pages.services.get_faturamento_escritorio import get_faturamento
-from get_main_pages.services.get_atividades_empresa import get_atividades_empresa_mes
+from get_main_pages.services.utils.get_faturamento_escritorio import get_faturamento
+from get_main_pages.services.utils.get_atividades_empresa import get_atividades_empresa_mes
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
 from django.http import JsonResponse
-from get_main_pages.services.get_faturamento import get_faturamento
-from get_main_pages.services.get_dados_empresa import get_empresa
-from get_main_pages.services.get_lanc_e_notas import get_importacoes_empresa
-from get_main_pages.services.get_quant_empregados import get_contratados_por_mes
-from get_main_pages.services.get_atividades_empresa import get_atividades_empresa_mes
+from get_main_pages.services.utils.get_faturamento import get_faturamento
+from get_main_pages.services.utils.get_dados_empresa import get_empresa
+from get_main_pages.services.utils.get_lanc_e_notas import get_importacoes_empresa
+from get_main_pages.services.utils.get_quant_empregados import get_contratados_por_mes
+from get_main_pages.services.utils.get_atividades_empresa import get_atividades_empresa_mes
 
 import logging
 
