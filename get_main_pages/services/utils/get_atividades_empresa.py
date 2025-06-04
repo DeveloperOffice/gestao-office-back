@@ -4,34 +4,44 @@ from odbc_reader.services import fetch_data
 import calendar
 
 # Lista de meses abreviados em português
-MESES_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-            'jul', 'ago', 'set', 'out', 'nov', 'dez']
+MESES_PT = [
+    "jan",
+    "fev",
+    "mar",
+    "abr",
+    "mai",
+    "jun",
+    "jul",
+    "ago",
+    "set",
+    "out",
+    "nov",
+    "dez",
+]
 
-def format_log_time(start_log, end_log):
-    if not isinstance(start_log, time) or not isinstance(end_log, time):
-        raise ValueError("start_log e end_log precisam ser do tipo datetime.time")
 
-    inicio = datetime.combine(date.min, start_log)
-    fim = datetime.combine(date.min, end_log)
+# Função para formatar o formato do Horário em segundos
+def format_log_time(start_date, start_time, end_date, end_time):
+    # Combina data e hora em um único datetime
+    formato = "%Y-%m-%d %H:%M:%S"
 
-    if fim < inicio:
-        fim += timedelta(days=1)
+    inicio = datetime.strptime(f"{start_date} {start_time}", formato)
+    fim = datetime.strptime(f"{end_date} {end_time}", formato)
 
-    return int((fim - inicio).total_seconds())
+    # Calcula a diferença em segundos (sempre positiva)
+    return abs(int((fim - inicio).total_seconds()))
+
 
 def get_atividades_empresa_mes(start_date, end_date):
     try:
         query = f"""
         SELECT
-            geloguser.codi_emp,
-            geloguser.data_log,
-            geloguser.tini_log,
-            geloguser.tfim_log
+            *
         FROM bethadba.geloguser
         WHERE geloguser.data_log BETWEEN '{start_date}' AND '{end_date}'
         """
         atividades = fetch_data(query)
-        
+
         resultado = {}
 
         for atividade in atividades:
@@ -44,7 +54,12 @@ def get_atividades_empresa_mes(start_date, end_date):
             mes = data_log.month
             ano = data_log.year
             mes_nome = f"{MESES_PT[mes - 1]}/{ano}"  # exemplo: jan/2024
-            tempo = format_log_time(atividade["tini_log"], atividade["tfim_log"])
+            tempo = format_log_time(
+                atividade["data_log"],  # Data de início (mesmo dia)
+                atividade["tini_log"],  # Hora de início
+                atividade["dfim_log"],  # Data real do fim (pode ser diferente)
+                atividade["tfim_log"],  # Hora do fim
+            )
 
             if empresa not in resultado:
                 resultado[empresa] = {"total": 0}
