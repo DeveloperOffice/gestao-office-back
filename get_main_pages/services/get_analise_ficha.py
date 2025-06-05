@@ -33,9 +33,22 @@ def get_ficha(start_date, end_date):
             INNER JOIN bethadba.fodepto ON foempregados.i_depto = fodepto.i_depto AND fodepto.codi_emp = foempregados.codi_emp
             INNER JOIN bethadba.forescisoes ON foempregados.i_empregados = forescisoes.i_empregados AND forescisoes.codi_emp = foempregados.codi_emp AND forescisoes.demissao > {hoje}
             """
-        query2 = f"""SELECT * FROM bethadba.foeventos"""
+        queryAtestados = f"""SELECT
+FOAFASTAMENTOS.CODI_EMP,
+FOAFASTAMENTOS.I_EMPREGADOS,
+FOAFASTAMENTOS.DATA_REAL,
+FOAFASTAMENTOS.DATA_FOLHA,
+FOAFASTAMENTOS.I_AFASTAMENTOS,
+FOAFASTAMENTOS.DATA_FIM,
+FOAFASTAMENTOS.DATA_FIM_TMP,
+FOAFASTAMENTOS.NUMERO_DIAS
+
+
+FROM bethadba.FOAFASTAMENTOS 
+WHERE DATA_REAL > '{start_date}'  AND DATA_REAL  < '{end_date}'
+  AND I_AFASTAMENTOS IN (6, 12, 18, 43, 45, 49, 50, 51, 54, 55, 56, 62, 64, 66, 67, 68, 69, 70, 72, 73, 83, 85, 87, 84, 86, 88)"""
         result = fetch_data(query)
-        result2 = fetch_data(query2)
+        resultAtestatos = fetch_data(queryAtestados)
         # Dicionário para escolaridade
         niveisEscolaridade = {
             1: "Analfabeto",
@@ -87,7 +100,21 @@ def get_ficha(start_date, end_date):
                 "admissao": row["admissao"],
                 "salario": row["salario"],
                 "venc_ferias": row["venc_ferias"],
+                "atestados": [],
             }
+            for atestado in resultAtestatos:
+                if (
+                    row["empresa"] == atestado["CODI_EMP"]
+                    and row["id_empregado"] == atestado["I_EMPREGADOS"]
+                ):
+                    funcionario["atestados"].append(
+                        {
+                            "data_inicial": atestado["DATA_FOLHA"],
+                            "data_final": atestado["DATA_FIM"],
+                            "num_dias": atestado["NUMERO_DIAS"],
+                         
+                        }
+                    )
 
             if empresa not in empresas_dict:
                 empresas_dict[empresa] = {
