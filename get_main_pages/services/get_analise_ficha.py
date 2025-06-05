@@ -33,22 +33,48 @@ def get_ficha(start_date, end_date):
             INNER JOIN bethadba.fodepto ON foempregados.i_depto = fodepto.i_depto AND fodepto.codi_emp = foempregados.codi_emp
             INNER JOIN bethadba.forescisoes ON foempregados.i_empregados = forescisoes.i_empregados AND forescisoes.codi_emp = foempregados.codi_emp AND forescisoes.demissao > {hoje}
             """
-        queryAtestados = f"""SELECT
-FOAFASTAMENTOS.CODI_EMP,
-FOAFASTAMENTOS.I_EMPREGADOS,
-FOAFASTAMENTOS.DATA_REAL,
-FOAFASTAMENTOS.DATA_FOLHA,
-FOAFASTAMENTOS.I_AFASTAMENTOS,
-FOAFASTAMENTOS.DATA_FIM,
-FOAFASTAMENTOS.DATA_FIM_TMP,
-FOAFASTAMENTOS.NUMERO_DIAS
+        queryAfastamentos = f"""SELECT
+                            FOAFASTAMENTOS.CODI_EMP,
+                            FOAFASTAMENTOS.I_EMPREGADOS,
+                            FOAFASTAMENTOS_TIPOS.DESCRICAO,
+                            FOAFASTAMENTOS.DATA_REAL,
+                            FOAFASTAMENTOS.DATA_FOLHA,
+                            FOAFASTAMENTOS.I_AFASTAMENTOS,
+                            FOAFASTAMENTOS.DATA_FIM,
+                            FOAFASTAMENTOS.DATA_FIM_TMP,
+                            FOAFASTAMENTOS.NUMERO_DIAS
 
 
-FROM bethadba.FOAFASTAMENTOS 
-WHERE DATA_REAL > '{start_date}'  AND DATA_REAL  < '{end_date}'
-  AND I_AFASTAMENTOS IN (6, 12, 18, 43, 45, 49, 50, 51, 54, 55, 56, 62, 64, 66, 67, 68, 69, 70, 72, 73, 83, 85, 87, 84, 86, 88)"""
+                            FROM bethadba.FOAFASTAMENTOS 
+                            INNER JOIN bethadba.FOAFASTAMENTOS_TIPOS ON FOAFASTAMENTOS.I_AFASTAMENTOS = FOAFASTAMENTOS_TIPOS.I_AFASTAMENTOS
+                            WHERE DATA_REAL > '{start_date}'  AND DATA_REAL  < '{end_date}'"""
+
+        queryExames = f"""SELECT
+    FOMONITORAMENTO_SAUDE_TRABALHADOR.CODI_EMP,
+    FOMONITORAMENTO_SAUDE_TRABALHADOR.I_EMPREGADOS,
+    FOMONITORAMENTO_SAUDE_TRABALHADOR.SEQUENCIAL,
+    FOMONITORAMENTO_SAUDE_TRABALHADOR.DATA_ASO,
+    FOMONITORAMENTO_SAUDE_TRABALHADOR.VENCIMENTO_ASO,
+    CASE FOMONITORAMENTO_SAUDE_TRABALHADOR.TIPO_ASO
+        WHEN 1 THEN 'Admissional'
+        WHEN 2 THEN 'Periódico'
+        WHEN 3 THEN 'Retorno ao trabalho'
+        WHEN 4 THEN 'Mudança de função'
+        WHEN 5 THEN 'Monitoração pontual'
+        WHEN 6 THEN 'Demissional'
+        ELSE 'Outro'
+    END AS TIPO_ASO_DESC,
+    CASE FOMONITORAMENTO_SAUDE_TRABALHADOR.RESULTADO
+        WHEN 1 THEN 'Apto'
+        WHEN 2 THEN 'Inapto'
+        ELSE 'Indefinido'
+    END AS RESULTADO
+FROM 
+    bethadba.FOMONITORAMENTO_SAUDE_TRABALHADOR WHERE DATA_ASO > '{start_date}'  AND VENCIMENTO_ASO  < '{end_date}'
+"""
         result = fetch_data(query)
-        resultAtestatos = fetch_data(queryAtestados)
+        resultAfastamentos = fetch_data(queryAfastamentos)
+        resultExames = fetch_data(queryExames)
         # Dicionário para escolaridade
         niveisEscolaridade = {
             1: "Analfabeto",
@@ -79,7 +105,7 @@ WHERE DATA_REAL > '{start_date}'  AND DATA_REAL  < '{end_date}'
 
         # Criar um dicionário para agrupar funcionários por empresa
         empresas_dict = {}
-
+        
         for row in result:
             empresa = row["empresa"]
             nome_empresa = row["nome_empresa"]
@@ -100,22 +126,41 @@ WHERE DATA_REAL > '{start_date}'  AND DATA_REAL  < '{end_date}'
                 "admissao": row["admissao"],
                 "salario": row["salario"],
                 "venc_ferias": row["venc_ferias"],
-                "atestados": [],
+                "afastamentos": [],
+                "exames":[]
             }
-            for atestado in resultAtestatos:
+            
+            #Montando afastamentos dentro da empresa 
+            for afastamento in resultAfastamentos:
                 if (
-                    row["empresa"] == atestado["CODI_EMP"]
-                    and row["id_empregado"] == atestado["I_EMPREGADOS"]
+                    row["empresa"] == afastamento["CODI_EMP"]
+                    and row["id_empregado"] == afastamento["I_EMPREGADOS"]
                 ):
-                    funcionario["atestados"].append(
+                    funcionario["afastamentos"].append(
                         {
-                            "data_inicial": atestado["DATA_FOLHA"],
-                            "data_final": atestado["DATA_FIM"],
-                            "num_dias": atestado["NUMERO_DIAS"],
-                         
+                            "data_inicial": afastamento["DATA_FOLHA"],
+                            "data_final": afastamento["DATA_FIM"],
+                            "num_dias": afastamento["NUMERO_DIAS"],
+                            "tipo": afastamento["DESCRICAO"],
                         }
                     )
-
+                    
+            #Montando exames dentro da empresa 
+            for exame in resultExames:
+                if (
+                    row["empresa"] == exame["CODI_EMP"]
+                    and row["id_empregado"] == exame["I_EMPREGADOS"]
+                ):
+                    funcionario["exames"].append(
+                        {
+                            "data_inicial": exame["DATA_ASO"],
+                            "data_vencimento": exame["VENCIMENTO_ASO"],
+                            "resultado": exame["RESULTADO"],
+                            "tipo": exame["TIPO_ASO_DESC"],
+                        }
+                    )
+                    
+            #Montando Lista completa
             if empresa not in empresas_dict:
                 empresas_dict[empresa] = {
                     "id_empresa": empresa,
