@@ -1,19 +1,12 @@
-# get_main_pages/views/cliente.py
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema
-from get_main_pages.serializers.analise_cliente.serializer import (
-    AnaliseClienteRequestSerializer,
-    AnaliseClienteResponseSerializer
-)
-from get_main_pages.services.get_analise_ficha import get_cadastros
-from get_main_pages.serializers.analise_cliente.schema import ANALISE_CLIENTE_SCHEMA
+from django.http import JsonResponse
+from get_main_pages.services.get_analise_ficha import get_ficha
 from datetime import datetime
 from django.http import JsonResponse
 
-@extend_schema(**ANALISE_CLIENTE_SCHEMA)
-class get_analise_ficha(APIView):
+
+class get_fichas(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -37,5 +30,5 @@ class get_analise_ficha(APIView):
                 {"error": "As datas devem estar no formato YYYY-MM-DD"}, status=400
             )
 
-        result = get_cadastros(start_date, end_date)
-        return result
+        result = get_ficha(start_date, end_date)
+        return JsonResponse(result, safe=False, status=200)

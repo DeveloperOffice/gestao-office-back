@@ -6,15 +6,15 @@ from datetime import datetime
 
 
 # Função para formatar o formato do Horário em segundos
-def format_log_time(start_log, end_log):
-    formato = "%H:%M:%S"
+def format_log_time(start_date, start_time, end_date, end_time):
+    # Combina data e hora em um único datetime
+    formato = "%Y-%m-%d %H:%M:%S"
 
-    inicio = datetime.strptime(start_log, formato)
-    fim = datetime.strptime(end_log, formato)
+    inicio = datetime.strptime(f"{start_date} {start_time}", formato)
+    fim = datetime.strptime(f"{end_date} {end_time}", formato)
 
-    diferenca_em_segundos = int((fim - inicio).total_seconds())
-
-    return diferenca_em_segundos
+    # Calcula a diferença em segundos (sempre positiva)
+    return abs(int((fim - inicio).total_seconds()))
 
 
 def get_lista_usuario():
@@ -72,7 +72,12 @@ def get_atividades_usuario_cliente(start_date, end_date):
         for atividade in atividades:
             usuario = atividade["usua_log"]
             empresa = atividade["codi_emp"]
-            tempo_gasto = format_log_time(atividade["tini_log"], atividade["tfim_log"])
+            tempo_gasto = format_log_time(
+                atividade["data_log"],  # Data de início (mesmo dia)
+                atividade["tini_log"],  # Hora de início
+                atividade["dfim_log"],  # Data real do fim (pode ser diferente)
+                atividade["tfim_log"],  # Hora do fim
+            )
             mes = int(
                 datetime.strptime(atividade["data_log"], "%Y-%m-%d").strftime("%m")
             )
@@ -167,7 +172,12 @@ def get_atividades_usuario_modulo(start_date, end_date):
         for atividade in total:
             usuario = atividade["usua_log"]
             modulo = atividade["sist_log"]
-            tempo_gasto = format_log_time(atividade["tini_log"], atividade["tfim_log"])
+            tempo_gasto = format_log_time(
+                atividade["data_log"],  # Data de início (mesmo dia)
+                atividade["tini_log"],  # Hora de início
+                atividade["dfim_log"],  # Data real do fim (pode ser diferente)
+                atividade["tfim_log"],  # Hora do fim
+            )
 
             data_log = datetime.strptime(atividade["data_log"], "%Y-%m-%d")
             mes_abreviado = meses_abrev[data_log.month - 1]
