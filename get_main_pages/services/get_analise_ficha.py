@@ -28,21 +28,21 @@ def get_ficha(start_date, end_date):
                 forescisoes.demissao,
                 foempregados.salario,
                 foempregados.venc_ferias
-            FROM bethadba.foempregados 
-            INNER JOIN bethadba.geempre 
+                FROM bethadba.foempregados 
+                INNER JOIN bethadba.geempre 
                 ON foempregados.codi_emp = geempre.codi_emp 
                 AND geempre.stat_emp = 'A'
-            INNER JOIN bethadba.focargos 
+                INNER JOIN bethadba.focargos 
                 ON foempregados.i_cargos = focargos.i_cargos 
                 AND focargos.SITUACAO = 1 
                 AND focargos.codi_emp = foempregados.codi_emp
-            INNER JOIN bethadba.fodepto 
+                INNER JOIN bethadba.fodepto 
                 ON foempregados.i_depto = fodepto.i_depto 
                 AND fodepto.codi_emp = foempregados.codi_emp
-            INNER JOIN bethadba.forescisoes 
+                LEFT JOIN bethadba.forescisoes 
                 ON foempregados.i_empregados = forescisoes.i_empregados 
-                AND forescisoes.codi_emp = foempregados.codi_emp 
-                AND forescisoes.demissao > {hoje}
+                AND forescisoes.codi_emp = foempregados.codi_emp
+                
         """
 
         # Query de afastamentos
@@ -158,6 +158,7 @@ def get_ficha(start_date, end_date):
                 "escolaridade": niveisEscolaridade[row["escolaridade"]],
                 "departamento": row["departamento"],
                 "admissao": row["admissao"],
+                "demissao": row["demissao"],
                 "salario": row["salario"],
                 "venc_ferias": row["venc_ferias"],
                 "afastamentos": [],
@@ -236,7 +237,9 @@ def get_ficha(start_date, end_date):
 
         return {
             "dados": lista_empresas,
-            "alteracao_salario": lista_alteracoes_salariais,
+            "alteracao_salario": lista_alteracoes_salariais
+
+    
         }
 
     except Exception as e:
