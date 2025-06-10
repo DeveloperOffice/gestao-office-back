@@ -120,11 +120,28 @@ def get_ficha(start_date, end_date):
                 FROM bethadba.FOFERIAS
                 INNER JOIN bethadba.foempregados ON foempregados.i_empregados = FOFERIAS.I_EMPREGADOS AND foempregados.codi_emp = FOFERIAS.CODI_EMP """
 
+        queryCusto = f"""
+                        SELECT
+                    fomovtoserv.codi_emp,
+                    fomovtoserv.i_empregados,
+                    foempregados.nome,
+                    fomovtoserv.data,
+                    fomovtoserv.tipo_proces,
+                    fomovtoserv.i_eventos,
+                    fomovtoserv.valor_inf,
+                    fomovtoserv.valor_cal,
+                    fomovtoserv.prov_desc
+
+                    FROM bethadba.fomovtoserv
+                    INNER JOIN bethadba.foempregados ON foempregados.i_empregados = fomovtoserv.i_empregados AND foempregados.codi_emp = fomovtoserv.codi_emp
+                WHERE fomovtoserv.data > '{start_date}' AND fomovtoserv.data < '{end_date}'"""
+
         result = fetch_data(query)
         resultAfastamentos = fetch_data(queryAfastamentos)
         resultExames = fetch_data(queryExames)
         resultSalarios = fetch_data(queryAlteracoesSalarios)
         resultFerias = fetch_data(queryFerias)
+        resultCustos = fetch_data(queryCusto)
 
         # Dicionário para escolaridade
         niveisEscolaridade = {
@@ -223,8 +240,6 @@ def get_ficha(start_date, end_date):
         # Converter o dicionário para uma lista de empresas
         lista_empresas = list(empresas_dict.values())
 
-        
-        
         # Criar um dicionário para agrupar alterações sálariais por empresa
         salariosdict = {}
 
@@ -251,20 +266,18 @@ def get_ficha(start_date, end_date):
         # Resultado final
         lista_alteracoes_salariais = list(salariosdict.values())
 
-        
-        #Criar dicionário para férias
+        # Criar dicionário para férias
         ferias_dict = {}
-        
-        #Realizar tratativa das férias
+
+        # Realizar tratativa das férias
         for row in resultFerias:
             id_empresa = row["CODI_EMP"]
             id_empregado = row["I_EMPREGADOS"]
-            
+
             # Se a empresa não existe no dicionário, cria a estrutura básica
             if id_empresa not in ferias_dict:
                 ferias_dict[id_empresa] = {"id_empresa": id_empresa, "ferias": []}
-            
-            
+
             # Adiciona as férias
             ferias_dict[id_empresa]["ferias"].append(
                 {
@@ -276,17 +289,16 @@ def get_ficha(start_date, end_date):
                     "fim_gozo": row["FIM_GOZO"],
                 }
             )
-        
-         # Resultado final
-        lista_ferias = list(ferias_dict.values())
-        
-      
-        return {
-            "dados": lista_empresas,
-            "alteracao_salario": lista_alteracoes_salariais,
-            "ferias": lista_ferias
 
-        }
+        # Resultado final
+        lista_ferias = list(ferias_dict.values())
+
+        # return {
+        #     "dados": lista_empresas,
+        #     "alteracao_salario": lista_alteracoes_salariais,
+        #     "ferias": lista_ferias,
+        # }
+        return resultCustos
 
     except Exception as e:
         return {"error": str(e)}
