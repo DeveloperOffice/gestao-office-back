@@ -8,6 +8,8 @@ from get_main_pages.views.analise_usuario import (
 from get_main_pages.views.teste import get_teste
 from get_main_pages.views.analise_escritorio import get_escritorios
 from get_main_pages.views.analise_ficha import get_fichas
+from get_main_pages.views.analise_demografico import get_demograficos
+
 
 
 urlpatterns = [
@@ -21,4 +23,5 @@ urlpatterns = [
     path("teste", get_teste.as_view(), name="teste_faturamento"),
     path("ficha", get_fichas.as_view(), name="ficha"),
     path("escritorios", get_escritorios.as_view(), name="analise_escritorios"),
+    path("demografico", get_demograficos.as_view(), name="analise_demografico"),
 ]
