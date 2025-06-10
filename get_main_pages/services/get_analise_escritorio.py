@@ -98,6 +98,7 @@ def agrupar_por_empresa_mes(query_result, data_key):
         ano = data.year
         nome_mes = f"{MESES_NUM_TO_STR[mes]}/{ano}"
 
+        # Verifica se a empresa é um escritório (não é cliente fixo)
         if codi_emp not in dados:
             dados[codi_emp] = {}
 
@@ -203,6 +204,7 @@ def get_analise_escritorio(start_date, end_date):
         SELECT codi_emp, dsai_sai AS data_ref, COUNT(*) AS total_ocorrencias
         FROM bethadba.efsaidas
         WHERE dsai_sai BETWEEN '{start_date}' AND '{end_date}'
+        AND codi_emp IN (SELECT DISTINCT CODI_EMP FROM bethadba.HRCLIENTE WHERE I_CLIENTE_FIXO IS NULL)
         GROUP BY codi_emp, dsai_sai
         """
 
@@ -210,6 +212,7 @@ def get_analise_escritorio(start_date, end_date):
         SELECT codi_emp, dent_ent AS data_ref, COUNT(*) AS total_ocorrencias
         FROM bethadba.efentradas
         WHERE dent_ent BETWEEN '{start_date}' AND '{end_date}'
+        AND codi_emp IN (SELECT DISTINCT CODI_EMP FROM bethadba.HRCLIENTE WHERE I_CLIENTE_FIXO IS NULL)
         GROUP BY codi_emp, dent_ent
         """
 
@@ -217,6 +220,7 @@ def get_analise_escritorio(start_date, end_date):
         SELECT codi_emp, dser_ser AS data_ref, COUNT(*) AS total_ocorrencias
         FROM bethadba.efservicos
         WHERE dser_ser BETWEEN '{start_date}' AND '{end_date}'
+        AND codi_emp IN (SELECT DISTINCT CODI_EMP FROM bethadba.HRCLIENTE WHERE I_CLIENTE_FIXO IS NULL)
         GROUP BY codi_emp, dser_ser
         """
 
@@ -224,6 +228,7 @@ def get_analise_escritorio(start_date, end_date):
         SELECT codi_emp, data_lan AS data_ref, COUNT(*) AS total_ocorrencias
         FROM bethadba.ctlancto
         WHERE data_lan BETWEEN '{start_date}' AND '{end_date}'
+        AND codi_emp IN (SELECT DISTINCT CODI_EMP FROM bethadba.HRCLIENTE WHERE I_CLIENTE_FIXO IS NULL)
         GROUP BY codi_emp, data_lan
         """
 
@@ -231,7 +236,8 @@ def get_analise_escritorio(start_date, end_date):
         SELECT codi_emp, data_lan AS data_ref, COUNT(*) AS total_ocorrencias
         FROM bethadba.ctlancto
         WHERE data_lan BETWEEN '{start_date}' AND '{end_date}'
-          AND origem_reg != 0
+        AND origem_reg != 0
+        AND codi_emp IN (SELECT DISTINCT CODI_EMP FROM bethadba.HRCLIENTE WHERE I_CLIENTE_FIXO IS NULL)
         GROUP BY codi_emp, data_lan
         """
 
@@ -306,21 +312,14 @@ def get_analise_escritorio(start_date, end_date):
 
             # Preencher dados de importações
             for mes in meses:
-                dados_importacoes["entradas"][mes] = entradas.get(
-                    escritorio["codigo_escritorio"], {}
-                ).get(mes, 0)
-                dados_importacoes["saidas"][mes] = saidas.get(
-                    escritorio["codigo_escritorio"], {}
-                ).get(mes, 0)
-                dados_importacoes["servicos"][mes] = servicos.get(
-                    escritorio["codigo_escritorio"], {}
-                ).get(mes, 0)
-                dados_importacoes["lancamentos"][mes] = lancamentos.get(
-                    escritorio["codigo_escritorio"], {}
-                ).get(mes, 0)
-                dados_importacoes["lancamentos_manuais"][mes] = lancamentos_manuais.get(
-                    escritorio["codigo_escritorio"], {}
-                ).get(mes, 0)
+                # Pega apenas os dados do escritório atual
+                codigo_escritorio = escritorio["codigo_escritorio"]
+                
+                dados_importacoes["entradas"][mes] = entradas.get(codigo_escritorio, {}).get(mes, 0)
+                dados_importacoes["saidas"][mes] = saidas.get(codigo_escritorio, {}).get(mes, 0)
+                dados_importacoes["servicos"][mes] = servicos.get(codigo_escritorio, {}).get(mes, 0)
+                dados_importacoes["lancamentos"][mes] = lancamentos.get(codigo_escritorio, {}).get(mes, 0)
+                dados_importacoes["lancamentos_manuais"][mes] = lancamentos_manuais.get(codigo_escritorio, {}).get(mes, 0)
 
                 # Calcular porcentagem de lançamentos manuais para o mês
                 total_lancamentos_mes = dados_importacoes["lancamentos"][mes]
@@ -329,25 +328,16 @@ def get_analise_escritorio(start_date, end_date):
                         dados_importacoes["lancamentos_manuais"][mes]
                         / total_lancamentos_mes
                     ) * 100
-                    dados_importacoes["porcentagem_lancamentos_manuais"][
-                        mes
-                    ] = f"{porcentagem:.1f}%"
+                    dados_importacoes["porcentagem_lancamentos_manuais"][mes] = f"{porcentagem:.1f}%"
                 else:
                     dados_importacoes["porcentagem_lancamentos_manuais"][mes] = "0%"
 
-                dados_importacoes["total_entradas"] += dados_importacoes["entradas"][
-                    mes
-                ]
+                # Soma apenas os dados do escritório
+                dados_importacoes["total_entradas"] += dados_importacoes["entradas"][mes]
                 dados_importacoes["total_saidas"] += dados_importacoes["saidas"][mes]
-                dados_importacoes["total_servicos"] += dados_importacoes["servicos"][
-                    mes
-                ]
-                dados_importacoes["total_lancamentos"] += dados_importacoes[
-                    "lancamentos"
-                ][mes]
-                dados_importacoes["total_lancamentos_manuais"] += dados_importacoes[
-                    "lancamentos_manuais"
-                ][mes]
+                dados_importacoes["total_servicos"] += dados_importacoes["servicos"][mes]
+                dados_importacoes["total_lancamentos"] += dados_importacoes["lancamentos"][mes]
+                dados_importacoes["total_lancamentos_manuais"] += dados_importacoes["lancamentos_manuais"][mes]
 
             # Calcular porcentagem total de lançamentos manuais
             if dados_importacoes["total_lancamentos"] > 0:
@@ -355,12 +345,11 @@ def get_analise_escritorio(start_date, end_date):
                     dados_importacoes["total_lancamentos_manuais"]
                     / dados_importacoes["total_lancamentos"]
                 ) * 100
-                dados_importacoes["porcentagem_total_lancamentos_manuais"] = (
-                    f"{porcentagem_total:.1f}%"
-                )
+                dados_importacoes["porcentagem_total_lancamentos_manuais"] = f"{porcentagem_total:.1f}%"
             else:
                 dados_importacoes["porcentagem_total_lancamentos_manuais"] = "0%"
 
+            # Total geral agora é apenas a soma das notas do escritório
             dados_importacoes["total_geral"] = (
                 dados_importacoes["total_entradas"]
                 + dados_importacoes["total_saidas"]
