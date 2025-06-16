@@ -1,7 +1,6 @@
 import pandas as pd
 import re
 
-
 def read_google_sheets(link):
     try:
         # Extrai o ID da planilha
@@ -25,7 +24,6 @@ def read_google_sheets(link):
         print(f" Erro ao ler ao validar dados de login: {e}")
         return None
 
-
 def login_manager(usuario, senha):
     try:
         df = read_google_sheets(
@@ -36,21 +34,23 @@ def login_manager(usuario, senha):
             return {"error": "Erro ao processar login, fale com o seu administrador"}
 
         usuario = usuario.lower()
-        # Verifica se o usuario está na coluna 'usuario' (ajuste conforme o usuario da coluna na planilha)
-        usuario = df[df["USUARIO"].str.lower() == usuario]
+        usuario_row = df[df["USUARIO"].str.lower() == usuario]
 
-        # Se o usuario não for encontrado, retorna erro
-        if usuario.empty:
+        if usuario_row.empty:
             return {"result": False}
 
-        # Verifica se a senha na coluna ao lado (por exemplo, 'senha') bate
-        senha_correta = usuario["SENHA"].values[
-            0
-        ]  # Ajuste 'senha' conforme o nome da coluna na planilha
+        senha_correta = usuario_row["SENHA"].values[0]
         if senha == senha_correta:
-            return {"result": True}
+            # Extrai os dados desejados
+            user_data = {
+                "USUARIO": str(usuario_row["USUARIO"].values[0]),
+                "NOME": str(usuario_row["NOME"].values[0]),
+                "EMAIL": str(usuario_row["EMAIL"].values[0]),
+                "ID": int(usuario_row["ID"].values[0]),
+            }
+            return {"result": True, "user": user_data}
         else:
             return {"result": False}
 
     except Exception as e:
-        return {"error": f"Erro ao processar login, fale com o seu administrador"}
+        return {"error": "Erro ao processar login, fale com o seu administrador"}
