@@ -75,6 +75,16 @@ def get_demografico(start_date, end_date):
         13: "Pós Graduação",
     }
 
+    categorias = {
+        1: "Mensalista",
+        3: "Semanalista",
+        4: "Diarista",
+        5: "Horista",
+        6: "Tarefeiro",
+        7: "Comissionado",
+        8: "Diretor"
+    }
+
     empresas_dict = {}  
 
     for row in result:
@@ -103,7 +113,7 @@ def get_demografico(start_date, end_date):
             "salario": row["salario"],
             "venc_ferias": row["venc_ferias"],
             "cargo": row["cargo"],
-            "categoria": row["categoria"],
+            "categoria": categorias.get(row["categoria"], "Não informado"),
             "afastamentos": funcionario_afastamentos
         }
 

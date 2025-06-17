@@ -11,7 +11,6 @@ from get_main_pages.views.analise_ficha import get_fichas
 from get_main_pages.views.analise_demografico import get_demograficos
 
 
-
 urlpatterns = [
     path("cliente", get_analise_cliente.as_view(), name="analise_cliente"),
     path("usuario", get_analise_usuarios.as_view(), name="analise_usuario"),
