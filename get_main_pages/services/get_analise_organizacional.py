@@ -16,7 +16,7 @@ def get_organizacional():
         FOGUIAGRFC.I_EMPREGADOS = FOBASESSERV.I_EMPREGADOS
         AND FOBASESSERV.COMPETENCIA = '2024-12-01'  -- Ajuste conforme necessário
     GROUP BY 
-        FOGUIAGRFC.CODI_EMP  -- Agrupando os resultados por código da empresa
+        FOGUIAGRFC.CODI_EMP  
     """
     try:
         result = fetch_data(query)  # Executando a consulta
