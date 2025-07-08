@@ -47,7 +47,7 @@ def login_manager(usuario, senha):
                 "NOME": str(usuario_row["NOME"].values[0]),
                 "EMAIL": str(usuario_row["EMAIL"].values[0]),
                 "ID": int(usuario_row["ID"].values[0]),
-                "TIPO": int(usuario_row["TIPO"].values[0]),
+                "TIPO": int(usuario_row["TIPO"].values[0])
             }
             return {"result": True, "user": user_data}
         else:
