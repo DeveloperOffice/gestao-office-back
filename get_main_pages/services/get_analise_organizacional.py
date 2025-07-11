@@ -8,7 +8,6 @@ def get_organizacional():
         r.demissao,
         g.i_empregados AS i_empregado,
 
-        -- Salário atualizado apenas se diferente do original
         CASE 
             WHEN a.novo_salario IS NOT NULL AND a.novo_salario <> f.salario
             THEN a.novo_salario  
@@ -17,7 +16,6 @@ def get_organizacional():
 
         g.aviso_previo_base AS aviso_previo,
 
-        -- 13º proporcional da rescisão
         CASE 
             WHEN r.demissao IS NOT NULL AND r.demissao <= CURRENT DATE THEN 
                 ROUND(
@@ -42,7 +40,6 @@ def get_organizacional():
             ELSE 0
         END AS decimo_terceiro_rescisao,
 
-        -- 13º proporcional atual (para empregados ativos ou com demissão futura)
         CASE 
             WHEN r.demissao IS NULL OR r.demissao > CURRENT DATE THEN
                 ROUND(
@@ -65,7 +62,9 @@ def get_organizacional():
                     2
                 )
             ELSE 0
-        END AS decimo_terceiro
+        END AS decimo_terceiero,
+
+        COALESCE(fl.valor_ferias, 0) AS valor_ferias
 
     FROM bethadba.foguiagrfc g
     LEFT JOIN bethadba.foempregados f 
@@ -81,6 +80,18 @@ def get_organizacional():
         GROUP BY codi_emp, i_empregados
     ) a 
         ON f.codi_emp = a.codi_emp AND f.i_empregados = a.i_empregados
+
+    -- Férias pagas
+    LEFT JOIN (
+        SELECT
+            codi_emp,
+            i_empregados,
+            SUM(COALESCE(valor_informado, valor_calculado)) AS valor_ferias
+        FROM bethadba.foferias_lancamentos
+        GROUP BY codi_emp, i_empregados
+    ) fl
+        ON f.codi_emp = fl.codi_emp AND f.i_empregados = fl.i_empregados
+
     WHERE f.admissao IS NOT NULL;
     """
 
@@ -100,7 +111,8 @@ def get_organizacional():
                 "salario": row["salario"],
                 "aviso_previo": row["aviso_previo"],
                 "decimo_terceiro_rescisao": row["decimo_terceiro_rescisao"],
-                "decimo_terceiro": row["decimo_terceiro"]
+                "decimo_terceiro": row["decimo_terceiro"],
+                "valor_ferias": row["valor_ferias"]
             }
 
             agrupado[codi_emp].append(empregado)
