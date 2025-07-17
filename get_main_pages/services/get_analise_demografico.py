@@ -75,7 +75,7 @@ def get_demografico(start_date, end_date):
         13: "Pós Graduação",
     }
 
-    empresas_dict = {}  
+    empresas_dict = {}
 
     for row in result:
         id_empresa = row["empresa"]
@@ -84,6 +84,7 @@ def get_demografico(start_date, end_date):
                 "id_empresa": id_empresa,
                 "nome_empresa": row["nome_empresa"],
                 "cnpj": row["cnpj"],
+                "empregados_ativos": 0,
                 "funcionarios": []
             }
 
@@ -107,8 +108,12 @@ def get_demografico(start_date, end_date):
             "afastamentos": funcionario_afastamentos
         }
 
+        # Verifica se o funcionário está ativo (sem demissão)
+        if row["demissao"] is None:
+            empresas_dict[id_empresa]["empregados_ativos"] += 1
+
         empresas_dict[id_empresa]["funcionarios"].append(funcionario)
 
     dados = list(empresas_dict.values())
 
-    return {"dados": dados}  
+    return {"dados": dados}
