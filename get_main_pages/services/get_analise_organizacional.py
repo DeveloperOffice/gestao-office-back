@@ -151,7 +151,6 @@ def get_organizacional():
                 ), 2)
             ELSE 0
         END AS decimo_terceiro_rescisao,
-
         CASE 
             WHEN r.demissao IS NULL OR r.demissao > CURRENT DATE THEN
                 ROUND((COALESCE(a.novo_salario, f.salario) / 12.0) * (
@@ -176,7 +175,7 @@ def get_organizacional():
     LEFT JOIN (
         SELECT 
             codi_emp, 
-            i_empregados, 
+            i_empregados,
             MAX(novo_salario) AS novo_salario  
         FROM bethadba.foaltesal
         GROUP BY codi_emp, i_empregados
