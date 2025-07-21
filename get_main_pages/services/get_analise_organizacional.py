@@ -1,132 +1,94 @@
-from collections import defaultdict
 from odbc_reader.services import fetch_data
 
-def get_organizacional():
-    query = """
-    SELECT
-        g.codi_emp,
-        r.demissao,
-        g.i_empregados AS i_empregado,
-
-        CASE 
-            WHEN a.novo_salario IS NOT NULL AND a.novo_salario <> f.salario
-            THEN a.novo_salario  
-            ELSE f.salario
-        END AS salario,
-
-        g.aviso_previo_base AS aviso_previo,
-
-        CASE 
-            WHEN r.demissao IS NOT NULL AND r.demissao <= CURRENT DATE THEN 
-                ROUND(
-                    (
-                        CASE 
-                            WHEN a.novo_salario IS NOT NULL AND a.novo_salario <> f.salario
-                            THEN a.novo_salario  
-                            ELSE f.salario
-                        END / 12.0
-                    ) * (
-                        DATEDIFF(month, 
-                            CASE 
-                                WHEN f.admissao > CAST(STR(YEAR(r.demissao)) || '-01-01' AS DATE)
-                                THEN f.admissao 
-                                ELSE CAST(STR(YEAR(r.demissao)) || '-01-01' AS DATE)
-                            END, 
-                            r.demissao
-                        ) + CASE WHEN DAY(r.demissao) >= 15 THEN 1 ELSE 0 END
-                    ),
-                    2
-                )
-            ELSE 0
-        END AS decimo_terceiro_rescisao,
-
-        CASE 
-            WHEN r.demissao IS NULL OR r.demissao > CURRENT DATE THEN
-                ROUND(
-                    (
-                        CASE 
-                            WHEN a.novo_salario IS NOT NULL AND a.novo_salario <> f.salario
-                            THEN a.novo_salario  
-                            ELSE f.salario
-                        END / 12.0
-                    ) * (
-                        DATEDIFF(month, 
-                            CASE 
-                                WHEN f.admissao > CAST(STR(YEAR(CURRENT DATE)) || '-01-01' AS DATE)
-                                THEN f.admissao 
-                                ELSE CAST(STR(YEAR(CURRENT DATE)) || '-01-01' AS DATE)
-                            END,
-                            CURRENT DATE
-                        ) + CASE WHEN DAY(CURRENT DATE) >= 15 THEN 1 ELSE 0 END
-                    ),
-                    2
-                )
-            ELSE 0
-        END AS decimo_terceiero,
-
-        COALESCE(fl.valor_ferias, 0) AS valor_ferias
-
-    FROM bethadba.foguiagrfc g
-    LEFT JOIN bethadba.foempregados f 
-        ON g.codi_emp = f.codi_emp AND g.i_empregados = f.i_empregados
-    LEFT JOIN bethadba.forescisoes r 
-        ON f.codi_emp = r.codi_emp AND f.i_empregados = r.i_empregados
-    LEFT JOIN (
-        SELECT 
-            codi_emp, 
-            i_empregados, 
-            MAX(novo_salario) AS novo_salario  
-        FROM bethadba.foaltesal
-        GROUP BY codi_emp, i_empregados
-    ) a 
-        ON f.codi_emp = a.codi_emp AND f.i_empregados = a.i_empregados
-
-    -- Férias pagas
-    LEFT JOIN (
-        SELECT
-            codi_emp,
-            i_empregados,
-            SUM(COALESCE(valor_informado, valor_calculado)) AS valor_ferias
-        FROM bethadba.foferias_lancamentos
-        GROUP BY codi_emp, i_empregados
-    ) fl
-        ON f.codi_emp = fl.codi_emp AND f.i_empregados = fl.i_empregados
-
-    WHERE f.admissao IS NOT NULL;
+def get_organizacional(start_date=None, end_date=None):
     """
-
+    Versão Final: Busca e consolida dados para todos os cards do dashboard,
+    considerando um filtro de data.
+    """
     try:
-        raw_data = fetch_data(query)
+        if start_date is None:
+            start_date = '2023-01-01'
+        if end_date is None:
+            end_date = '2023-12-31'
 
-        agrupado = defaultdict(list)
-        folha_total = defaultdict(float)
+        query_dissidio = """
+            SELECT
+                nome,
+                mes_base
+            FROM bethadba.fosindicatos
+        """
 
-        for row in raw_data:
-            codi_emp = row["codi_emp"]
-            salario = float(row["salario"]) if row["salario"] else 0
+        query_valor_por_funcionario = f"""
+            SELECT
+                emp.nome,
+                emp.salario
+            FROM 
+                bethadba.foempregados AS emp
+            LEFT JOIN 
+                bethadba.forescisoes AS resc ON emp.codi_emp = resc.codi_emp AND emp.i_empregados = resc.i_empregados
+            WHERE 
+                emp.admissao <= '{end_date}' 
+                AND (resc.demissao IS NULL OR resc.demissao >= '{start_date}')
+            ORDER BY 
+                emp.salario DESC
+        """
 
-            empregado = {
-                "demissao_debug": row.get("demissao"),
-                "i_empregado": row["i_empregado"],
-                "salario": row["salario"],
-                "aviso_previo": row["aviso_previo"],
-                "decimo_terceiro_rescisao": row["decimo_terceiro_rescisao"],
-                "decimo_terceiro": row["decimo_terceiro"],
-                "valor_ferias": row["valor_ferias"]
-            }
+        query_valor_por_tipo_calculo = f"""
+            SELECT
+                CASE lanc.tipo_processo
+                    WHEN 11 THEN '11 - Folha Mensal'
+                    WHEN 41 THEN '41 - Adiantamento'
+                    WHEN 42 THEN '42 - Complementar'
+                    WHEN 51 THEN '51 - 13º Adiantamento'
+                    WHEN 52 THEN '52 - 13º Integral'
+                    WHEN 60 THEN '60 - Férias'  -- Baseado no seu dashboard. A coluna pode ter 61, mas a UI mostra 60.
+                    ELSE 'Outros'
+                END AS tipo_calculo,
+                SUM(lanc.valor_calculado) AS total_valor
+            FROM 
+                bethadba.FOLANCAMENTOS_EVENTOS AS lanc
+            WHERE
+                lanc.competencia_inicial BETWEEN '{start_date}' AND '{end_date}'
+                AND lanc.valor_calculado IS NOT NULL
+            GROUP BY 
+                tipo_calculo
+            ORDER BY 
+                total_valor DESC
+        """
 
-            agrupado[codi_emp].append(empregado)
-            folha_total[codi_emp] += salario
+        result_dissidio_raw = fetch_data(query_dissidio)
+        result_funcionarios_raw = fetch_data(query_valor_por_funcionario)
+        result_tipos_calculo_raw = fetch_data(query_valor_por_tipo_calculo)
 
-        resultado_formatado = []
-        for codi_emp, empregados in agrupado.items():
-            resultado_formatado.append({
-                "codi_emp": codi_emp,
-                "folha_mensal": round(folha_total[codi_emp], 2),
-                "empregados": empregados
-            })
 
-        return {"dados": resultado_formatado}
+        meses_map = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
+        dissidio_final = []
+        for item in result_dissidio_raw:
+            if item.get('mes_base', 0) > 0:
+                dissidio_final.append({"nome_sindicato": item.get('nome'), "mes_base": meses_map.get(item.get('mes_base'), 'Inválido')})
+        dissidio_final.sort(key=lambda x: list(meses_map.values()).index(x['mes_base']))
+
+        salarios = [float(func.get('salario', 0)) for func in result_funcionarios_raw]
+        total_salarios = sum(salarios)
+        funcionarios_final = []
+        for func in result_funcionarios_raw:
+            salario = float(func.get('salario', 0))
+            percentual = (salario / total_salarios) * 100 if total_salarios > 0 else 0
+            funcionarios_final.append({"nome": func.get('nome'), "valor": salario, "percentual": round(percentual, 1)})
+            
+        valores_calculo = [float(calc.get('total_valor', 0)) for calc in result_tipos_calculo_raw]
+        total_geral_calculos = sum(valores_calculo)
+        calculos_final = []
+        for calc in result_tipos_calculo_raw:
+            valor = float(calc.get('total_valor', 0))
+            percentual = (valor / total_geral_calculos) * 100 if total_geral_calculos > 0 else 0
+            calculos_final.append({"nome": calc.get('tipo_calculo'), "valor": valor, "percentual": round(percentual, 1)})
+
+        return {
+            "dissidio": dissidio_final,
+            "valorPorFuncionario": funcionarios_final,
+            "valorPorTipoCalculo": calculos_final
+        }
 
     except Exception as e:
-        return {"erro": str(e)}
+        return {"erro": f"Ocorreu um erro ao processar os dados do dashboard: {str(e)}"}
