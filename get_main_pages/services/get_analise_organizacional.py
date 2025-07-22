@@ -66,12 +66,12 @@ def get_organizacional():
             MAX(novo_salario) AS novo_salario  
         FROM bethadba.foaltesal
         GROUP BY codi_emp, i_empregados
-    ) a 
+    )  a
         ON f.codi_emp = a.codi_emp AND f.i_empregados = a.i_empregados
     LEFT JOIN (
         SELECT
             codi_emp,
-            i_empregados,
+            i_empregados,   
             SUM(COALESCE(valor_informado, valor_calculado)) AS valor_ferias
         FROM bethadba.foferias_lancamentos
         GROUP BY codi_emp, i_empregados
@@ -86,12 +86,18 @@ def get_organizacional():
         agrupado = defaultdict(list)
         folha_total = defaultdict(float)
 
+        meses_nomes = {
+        1: "janeiro", 2: "feveiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
+        7: "julho", 8: "agosto", 9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+        }
+
         for row in raw_data:
             salario = float(row["salario"] or 0)
             codigo_sindicato = row.get("i_sindicatos")
             sindicato_info = sindicatos.get(codigo_sindicato, {"nome": "SINDICATO DESCONHECIDO", "mes_base": None})
             nome_sindicato = sindicato_info["nome"]
-            mes_base = sindicato_info["mes_base"]
+            mes_base_num = sindicato_info["mes_base"]
+            mes_base = meses_nomes.get(mes_base_num, "mês desconhecido")
 
             agrupado[row["codi_emp"]].append({
                 "demissao_debug": row.get("demissao"),
@@ -102,7 +108,7 @@ def get_organizacional():
                 "decimo_terceiro": row["decimo_terceiro"],
                 "valor_ferias": row["valor_ferias"],
                 "dissidio": nome_sindicato,
-                "mes_base": mes_base  
+                "mes_base":  mes_base  
             })
 
             folha_total[row["codi_emp"]] += salario
