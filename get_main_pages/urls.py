@@ -9,21 +9,15 @@ from get_main_pages.views.teste import get_teste
 from get_main_pages.views.analise_escritorio import get_escritorios
 from get_main_pages.views.analise_ficha import get_fichas
 from get_main_pages.views.analise_demografico import get_demograficos
-from get_main_pages.views.analise_organizacional import get_organizacionais
 
 
 
 urlpatterns = [
     path("cliente", get_analise_cliente.as_view(), name="analise_cliente"),
     path("usuario", get_analise_usuarios.as_view(), name="analise_usuario"),
-    path(
-        "usuario/modulo",
-        get_analise_usuario_modulo.as_view(),
-        name="analise_usuario_modulo",
-    ),
+    path("usuario/modulo",get_analise_usuario_modulo.as_view(),name="analise_usuario_modulo",),
     path("teste", get_teste.as_view(), name="teste_faturamento"),
     path("ficha", get_fichas.as_view(), name="ficha"),
     path("escritorios", get_escritorios.as_view(), name="analise_escritorios"),
     path("demografico", get_demograficos.as_view(), name="analise_demografico"),
-    path("organizacional", get_organizacionais.as_view(), name="analise_organizacional"),
 ]
