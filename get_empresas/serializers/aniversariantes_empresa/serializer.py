@@ -9,7 +9,9 @@ class EmpresaSerializer(serializers.Serializer):
         help_text="Nome completo/Razão Social da empresa"
     )
     cnpj = serializers.CharField(
-        help_text="CNPJ da empresa (com ou sem formatação)"
+        help_text="CNPJ da empresa (com ou sem formatação)",
+        allow_blank=True,
+        required=False
     )
     data_cadastro = serializers.DateField(
         help_text="Data de cadastro da empresa no sistema | YYYY-MM-DD",

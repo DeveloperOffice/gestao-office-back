@@ -47,7 +47,7 @@ def get_aniversariantes():
         for emp in empresas:
             codi_emp = emp.get("codi_emp")
             nome = emp.get("nome_emp")
-            cnpj = emp.get("cgce_emp")
+            cnpj = emp.get("cgce_emp") or ""
             data_cadastro = emp.get("dcad_emp")
             data_inicio = emp.get("dtinicio_emp")
 
