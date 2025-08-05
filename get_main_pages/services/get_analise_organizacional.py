@@ -27,6 +27,7 @@ def get_organizacional():
         COALESCE(a.novo_salario, f.salario) AS salario,
         g.aviso_previo_base AS aviso_previo,
         
+        -- Cálculo do 13º Rescisão
         CASE 
             WHEN r.demissao IS NOT NULL AND r.demissao <= CURRENT DATE THEN 
                 ROUND((COALESCE(a.novo_salario, f.salario) / 12.0) * (
@@ -40,6 +41,8 @@ def get_organizacional():
                 ), 2)
             ELSE 0
         END AS decimo_terceiro_rescisao,
+
+        -- Cálculo do 13º Salário
         CASE 
             WHEN r.demissao IS NULL OR r.demissao > CURRENT DATE THEN
                 ROUND((COALESCE(a.novo_salario, f.salario) / 12.0) * (
@@ -54,7 +57,16 @@ def get_organizacional():
             ELSE 0
         END AS decimo_terceiro,
 
-        COALESCE(fl.valor_ferias, 0) AS valor_ferias
+        -- Cálculo do valor das férias (inclui 33% adicional e abono)
+        COALESCE(fl.valor_ferias, 0) AS valor_ferias,
+
+        -- Cálculo das férias (salário + 33% adicional + abono)
+        CASE
+            WHEN f.categoria IN (4, 5) AND f.carga_horaria_variavel = 1 THEN
+                f.salario
+            ELSE
+                COALESCE(a.novo_salario, f.salario)
+        END * 1.33 AS valor_férias_com_adicional_33
 
         FROM bethadba.foguiagrfc g
         LEFT JOIN bethadba.foempregados f 
@@ -70,7 +82,7 @@ def get_organizacional():
                 MAX(novo_salario) AS novo_salario  
             FROM bethadba.foaltesal
             GROUP BY codi_emp, i_empregados
-        )  a
+        ) a
             ON f.codi_emp = a.codi_emp AND f.i_empregados = a.i_empregados
         LEFT JOIN (
             SELECT
@@ -81,8 +93,6 @@ def get_organizacional():
             GROUP BY codi_emp, i_empregados
         ) fl
             ON f.codi_emp = fl.codi_emp AND f.i_empregados = fl.i_empregados
-
-
     WHERE f.admissao IS NOT NULL;
     """
 
@@ -93,13 +103,14 @@ def get_organizacional():
         empresas_nomes = {}
 
         meses_nomes = {
-        1: "janeiro", 2: "feveiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
+        1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril", 5: "maio", 6: "junho",
         7: "julho", 8: "agosto", 9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
         }
 
         
         for row in raw_data:
-            salario = float(row["salario"] or 0)
+            salario = float(row["salario"] or 0)            
+
             codigo_sindicato = row.get("i_sindicatos")
             sindicato_info = sindicatos.get(codigo_sindicato, {"nome": "SINDICATO DESCONHECIDO", "mes_base": None})
             nome_sindicato = sindicato_info["nome"]
@@ -107,7 +118,6 @@ def get_organizacional():
             mes_base = meses_nomes.get(mes_base_num, "mês desconhecido")
 
             empresas_nomes[row["codi_emp"]] = row.get("nome_empresa", "Empresa Desconhecida")
-
 
             agrupado[row["codi_emp"]].append({
                 "demissao_debug": row.get("demissao"),
@@ -117,11 +127,10 @@ def get_organizacional():
                 "aviso_previo": row["aviso_previo"],
                 "decimo_terceiro_rescisao": row["decimo_terceiro_rescisao"],
                 "decimo_terceiro": row["decimo_terceiro"],
-                "valor_ferias": row["valor_ferias"],
+                "valor_férias_com_adicional_33": row["valor_férias_com_adicional_33"],
                 "dissidio": nome_sindicato,
-                "mes_base":  mes_base  
+                "mes_base": mes_base  
             })
-
 
             folha_total[row["codi_emp"]] += salario
 
