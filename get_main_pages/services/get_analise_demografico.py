@@ -15,7 +15,8 @@ def get_demografico(start_date, end_date):
         foempregados.grau_instrucao AS escolaridade,
         fodepto.nome AS departamento,
         foempregados.admissao,
-        forescisoes.demissao,
+        ultima_rescisao.demissao,
+        ultima_rescisao.motivo_demissao,
         foempregados.salario,
         foempregados.venc_ferias,
         foempregados.categoria
@@ -30,12 +31,19 @@ def get_demografico(start_date, end_date):
     INNER JOIN bethadba.fodepto 
         ON foempregados.i_depto = fodepto.i_depto 
         AND fodepto.codi_emp = foempregados.codi_emp
-    LEFT JOIN bethadba.forescisoes 
-        ON foempregados.i_empregados = forescisoes.i_empregados 
-        AND forescisoes.codi_emp = foempregados.codi_emp
-    WHERE foempregados.admissao BETWEEN '{start_date}' AND '{end_date}'
+    LEFT JOIN (
+        SELECT
+            codi_emp,
+            i_empregados,
+            MAX(demissao) AS demissao,
+            MAX(motivo) AS motivo_demissao
+        FROM bethadba.forescisoes
+        GROUP BY codi_emp, i_empregados
+    ) AS ultima_rescisao
+        ON foempregados.codi_emp = ultima_rescisao.codi_emp
+        AND foempregados.i_empregados = ultima_rescisao.i_empregados
     """
-    
+
     result = fetch_data(query)
 
     query_afastamentos = f"""
@@ -60,29 +68,61 @@ def get_demografico(start_date, end_date):
         })
 
     niveisEscolaridade = {
+        0: "Não informado",
         1: "Analfabeto",
-        2: "Ensino Fundamental I incompleto",
-        3: "Ensino Fundamental I completo",
-        4: "Ensino Fundamental II incompleto",
-        5: "Ensino Fundamental II completo",
-        6: "Ensino médio incompleto",
-        7: "Ensino médio completo",
-        8: "Superior incompleto",
-        9: "Superior completo",
+        2: "Ensino Fundamental até 5º Incompleto",
+        3: "Ensino Fundamental 5º Completo",
+        4: "Ensino Fundamental 6º ao 9º",
+        5: "Ensino Fundamental Completo",
+        6: "Ensino Médio Incompleto",
+        7: "Ensino Médio Completo",
+        8: "Superior Incompleto",
+        9: "Superior Completo",
         10: "Mestrado",
         11: "Doutorado",
-        12: "Ph. D.",
-        13: "Pós Graduação",
+        12: "Ph. D",
+        13: "Pós-Graduação"
     }
 
     categorias = {
         1: "Mensalista",
+        2: "Quinzenista",
         3: "Semanalista",
         4: "Diarista",
         5: "Horista",
-        6: "Tarefeiro",
-        7: "Comissionado",
-        8: "Diretor"
+        6: "Tarefa",
+        7: "Comissão",
+        8: "Diretoria",
+        9: "Mensalista",
+        10: "Mensalista",
+        11: "Aulista",
+        12: "Aulista Variável",
+        13: "Outros"
+    }
+
+    motivos_rescisao = {
+        1: "Demitido COM justa causa",
+        2: "Demitido SEM justa causa",
+        3: "Rescisão indireta",
+        4: "Pedido de demissão SEM justa causa",
+        5: "Cessão do empregado",
+        6: "Transferência sem ônus p/ mesma empresa",
+        8: "Morte",
+        10: "Rescisão de experiência (empregador)",
+        11: "Rescisão de experiência (empregado)",
+        12: "Término contrato de experiência",
+        13: "Morte por acidente de trabalho",
+        14: "Morte por doença profissional",
+        22: "Término do contrato determinado",
+        23: "Antecipado pelo empregador (determinado)",
+        24: "Antecipado pelo empregado (determinado)",
+        27: "Transferência sem ônus p/ outra empresa",
+        28: "Culpa recíproca",
+        29: "Extinção da empresa",
+        30: "Extinção por força maior",
+        40: "Morte por acidente de trajeto",
+        41: "Falecimento empregador sem continuidade",
+        42: "Falecimento empregador - opção empregado"
     }
 
     empresas_dict = {}
@@ -101,6 +141,8 @@ def get_demografico(start_date, end_date):
         key = (row["empresa"], row["id_empregado"])
         funcionario_afastamentos = afastamentos_dict.get(key, [])
 
+        ativo = row["demissao"] is None or row["admissao"] > row["demissao"]
+
         funcionario = {
             "id_empregado": row["id_empregado"],
             "nome": row["nome"],
@@ -111,15 +153,16 @@ def get_demografico(start_date, end_date):
             "departamento": row["departamento"],
             "admissao": row["admissao"],
             "demissao": row["demissao"],
+            "motivo_demissao": motivos_rescisao.get(row.get("motivo_demissao"), "Não informado"),
             "salario": row["salario"],
             "venc_ferias": row["venc_ferias"],
             "cargo": row["cargo"],
             "categoria": categorias.get(row["categoria"], "Não informado"),
-            "afastamentos": funcionario_afastamentos
+            "afastamentos": funcionario_afastamentos,
+            "situacao": "Ativo" if ativo else "Inativo"
         }
 
-        # Verifica se o funcionário está ativo (sem demissão)
-        if row["demissao"] is None:
+        if ativo:
             empresas_dict[id_empresa]["empregados_ativos"] += 1
 
         empresas_dict[id_empresa]["funcionarios"].append(funcionario)
