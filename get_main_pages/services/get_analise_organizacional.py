@@ -17,56 +17,64 @@ def get_organizacional():
         return {"erro": f"Erro ao buscar sindicatos: {str(e)}"}
 
     query = """
-    SELECT
-        g.codi_emp,
-        emp.nome_emp AS nome_empresa,
-        r.demissao,
-        g.i_empregados AS i_empregado,
-        f.nome AS nome_empregado,
-        f.i_sindicatos,
-        COALESCE(a.novo_salario, f.salario) AS salario,
-        g.aviso_previo_base AS aviso_previo,
-        
-        -- Cálculo do 13º Rescisão
-        CASE 
-            WHEN r.demissao IS NOT NULL AND r.demissao <= CURRENT DATE THEN 
-                ROUND((COALESCE(a.novo_salario, f.salario) / 12.0) * (
-                    DATEDIFF(month, 
-                        CASE 
-                            WHEN f.admissao > DATE(YEAR(r.demissao) || '-01-01') THEN f.admissao
-                            ELSE DATE(YEAR(r.demissao) || '-01-01')
-                        END, 
-                        r.demissao
-                    ) + CASE WHEN DAY(r.demissao) >= 15 THEN 1 ELSE 0 END
-                ), 2)
-            ELSE 0
-        END AS decimo_terceiro_rescisao,
+        SELECT
+            g.codi_emp,
+            emp.nome_emp AS nome_empresa,
+            r.demissao,
+            g.i_empregados AS i_empregado,
+            f.nome AS nome_empregado,
+            f.i_sindicatos,
+            COALESCE(a.novo_salario, f.salario) AS salario,
+            g.aviso_previo_base AS aviso_previo,
 
-        -- Cálculo do 13º Salário
-        CASE 
-            WHEN r.demissao IS NULL OR r.demissao > CURRENT DATE THEN
-                ROUND((COALESCE(a.novo_salario, f.salario) / 12.0) * (
-                    DATEDIFF(month, 
-                        CASE 
-                            WHEN f.admissao > DATE(YEAR(CURRENT DATE) || '-01-01') THEN f.admissao
-                            ELSE DATE(YEAR(CURRENT DATE) || '-01-01')
-                        END,
-                        CURRENT DATE
-                    ) + CASE WHEN DAY(CURRENT DATE) >= 15 THEN 1 ELSE 0 END
-                ), 2)
-            ELSE 0
-        END AS decimo_terceiro,
+            /* ====== TROCA 1: 13º DA RESCISÃO (classificação 23 do cálculo da rescisão) ====== */
+            CAST(
+            COALESCE((
+                SELECT SUM(MOV.VALOR_CAL)
+                FROM BETHADBA.FOMOVTOSERV MOV
+                JOIN BETHADBA.FOEVENTOS EVE
+                    ON EVE.I_EVENTOS = MOV.I_EVENTOS
+                JOIN BETHADBA.FOPARMTO PARM
+                    ON PARM.CODI_EMP = g.codi_emp
+                AND EVE.CODI_EMP = PARM.CODI_EMP_EVE
+                WHERE MOV.I_CALCULOS = r.I_CALCULOS
+                AND EVE.CLASSIFICACAO = 23
+                AND MOV.ORIGEM IN ('C','G','I','F')
+            ), 0) AS DECIMAL(18,6)
+            ) AS decimo_terceiro_rescisao,
 
-        -- Cálculo do valor das férias (inclui 33% adicional e abono)
-        COALESCE(fl.valor_ferias, 0) AS valor_ferias,
+            /* ====== TROCA 2: 13º NORMAL NO ANO ATUAL (TIPO_PROCESS 51 + 52) ====== */
+            CAST(
+            COALESCE((
+                SELECT SUM(MOV.VALOR_CAL)
+                FROM BETHADBA.FOMOVTOSERV MOV
+                JOIN BETHADBA.FOEVENTOS EVE
+                    ON EVE.I_EVENTOS = MOV.I_EVENTOS
+                JOIN BETHADBA.FOPARMTO PARM
+                    ON PARM.CODI_EMP = g.codi_emp
+                AND EVE.CODI_EMP = PARM.CODI_EMP_EVE
+                JOIN BETHADBA.FOBASESSERV BAS
+                    ON BAS.I_CALCULOS = MOV.I_CALCULOS
+                WHERE BAS.CODI_EMP = f.CODI_EMP
+                AND BAS.I_EMPREGADOS = f.I_EMPREGADOS
+                AND BAS.TIPO_PROCESS IN (51, 52)
+                AND BAS.RATEIO = 0
+                AND YEAR(BAS.COMPETENCIA) = YEAR(CURRENT DATE)
+                AND EVE.CLASSIFICACAO = 23
+                AND MOV.ORIGEM IN ('C','G','I','F')
+            ), 0) AS DECIMAL(18,6)
+            ) AS decimo_terceiro,
 
-        -- Cálculo das férias (salário + 33% adicional + abono)
-        CASE
-            WHEN f.categoria IN (4, 5) AND f.carga_horaria_variavel = 1 THEN
-                f.salario
-            ELSE
-                COALESCE(a.novo_salario, f.salario)
-        END * 1.33 AS valor_férias_com_adicional_33
+            -- Cálculo do valor das férias (inclui 33% adicional e abono)
+            COALESCE(fl.valor_ferias, 0) AS valor_ferias,
+
+            -- Cálculo das férias (salário + 33% adicional + abono)
+            CASE
+                WHEN f.categoria IN (4, 5) AND f.carga_horaria_variavel = 1 THEN
+                    f.salario
+                ELSE
+                    COALESCE(a.novo_salario, f.salario)
+            END * 1.33 AS valor_férias_com_adicional_33
 
         FROM bethadba.foguiagrfc g
         LEFT JOIN bethadba.foempregados f 
@@ -93,7 +101,8 @@ def get_organizacional():
             GROUP BY codi_emp, i_empregados
         ) fl
             ON f.codi_emp = fl.codi_emp AND f.i_empregados = fl.i_empregados
-    WHERE f.admissao IS NOT NULL;
+        WHERE f.admissao IS NOT NULL;
+
     """
 
     try:
