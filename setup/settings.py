@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "authenticator",
     "get_api_token",
     "drf_spectacular",
+    "cbs_proxy",  
 ]
 
 

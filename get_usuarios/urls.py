@@ -16,6 +16,7 @@ from get_usuarios.views.lancamentos_cont import (
     get_lancamento_usuario,
     get_lancamento_manual,
 )
+from get_usuarios.views.tempo_ocioso import get_tempo_ocioso_view
 
 urlpatterns = [
     # Listar
@@ -62,5 +63,10 @@ urlpatterns = [
         "lancamentos/manual",
         get_lancamento_manual.as_view(),
         name="lancamentos_manuais",
+    ),
+    path( 
+        "ocioso",
+        get_tempo_ocioso_view.as_view(),
+        name="lancamentos_tempo_ocioso",
     ),
 ]
