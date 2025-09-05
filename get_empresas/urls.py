@@ -17,3 +17,4 @@ urlpatterns = [
     path("cadastro", get_cadastro.as_view(), name="cadastros"),
     path("aniversariantes", get_aniversariantes.as_view(), name="socios_aniversariantes")
 ]
+    
