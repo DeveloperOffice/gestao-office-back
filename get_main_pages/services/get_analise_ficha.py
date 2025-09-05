@@ -57,7 +57,7 @@ def get_ficha(start_date, end_date):
                 FOAFASTAMENTOS.DATA_FIM,
                 FOAFASTAMENTOS.DATA_FIM_TMP,
                 FOAFASTAMENTOS.NUMERO_DIAS
-            FROM bethadba.FOAFASTAMEx'NTOS 
+            FROM bethadba.FOAFASTAME'NTOS 
             INNER JOIN bethadba.FOAFASTAMENTOS_TIPOS 
                 ON FOAFASTAMENTOS.I_AFASTAMENTOS = FOAFASTAMENTOS_TIPOS.I_AFASTAMENTOS
             WHERE DATA_REAL > '{start_date}' 
