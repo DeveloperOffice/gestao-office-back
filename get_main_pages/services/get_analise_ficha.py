@@ -57,7 +57,7 @@ def get_ficha(start_date, end_date):
                 FOAFASTAMENTOS.DATA_FIM,
                 FOAFASTAMENTOS.DATA_FIM_TMP,
                 FOAFASTAMENTOS.NUMERO_DIAS
-            FROM bethadba.FOAFASTAMENTOS 
+            FROM bethadba.FOAFASTAME'NTOS 
             INNER JOIN bethadba.FOAFASTAMENTOS_TIPOS 
                 ON FOAFASTAMENTOS.I_AFASTAMENTOS = FOAFASTAMENTOS_TIPOS.I_AFASTAMENTOS
             WHERE DATA_REAL > '{start_date}' 
@@ -74,7 +74,7 @@ def get_ficha(start_date, end_date):
                 FOMONITORAMENTO_SAUDE_TRABALHADOR.VENCIMENTO_ASO,
                 CASE FOMONITORAMENTO_SAUDE_TRABALHADOR.TIPO_ASO
                     WHEN 1 THEN 'Admissional'
-                    WHEN 2 THEN 'Periódico'
+                    WHEN 2 THEN 'Periódico' 
                     WHEN 3 THEN 'Retorno ao trabalho'
                     WHEN 4 THEN 'Mudança de função'
                     WHEN 5 THEN 'Monitoração pontual'
@@ -156,7 +156,7 @@ def get_ficha(start_date, end_date):
 
         # Criar um dicionário para agrupar funcionários por empresa
         empresas_dict = {}
-
+    
         for row in result:
             empresa = row["empresa"]
             nome_empresa = row["nome_empresa"]

@@ -22,6 +22,7 @@ urlpatterns = [
     path("folha/", include("get_folha.urls")),
     path("usuarios/", include("get_usuarios.urls")),
     path("main/", include("get_main_pages.urls")),
+    path('api/', include('cbs_proxy.urls')),
     
     
     # 1) Gera o JSON do esquema OpenAPI

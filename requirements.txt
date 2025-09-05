@@ -21,3 +21,4 @@ six==1.17.0
 sqlparse==0.5.3
 tzdata==2025.1
 uritemplate==4.1.1
+requests==2.32.3
