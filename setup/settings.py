@@ -17,7 +17,7 @@ DEBUG = env.bool("DEBUG", default=False)
 
 # Configurações ODBC
 ODBC_DRIVER = env("ODBC_DRIVER", default="SQL Anywhere 17")
-ODBC_SERVER = env("ODBC_SERVER", default="dominio3")
+ODBC_SERVER = env("ODBC_SERVER", default="srvcontabil")
 ODBC_DATABASE = env("ODBC_DATABASE", default="contabil")
 ODBC_USER = env("ODBC_USER", default="EXTERNO")
 ODBC_PASSWORD = env("ODBC_PASSWORD", default="externo")
