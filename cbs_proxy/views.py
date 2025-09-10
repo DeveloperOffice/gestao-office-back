@@ -1,42 +1,33 @@
-import subprocess
+import subprocess, threading, time
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-def run_calculadora():
+def _start_calc_background():
+    # Inicia a calculadora no WSL e injeta "1" + Enter (duas vezes, por segurança)
+    command = ["wsl", "-d", "calculadora", "--cd", "/calculadora", "--exec", "bash", "start.sh"]
+    proc = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
     try:
-        command = ["wsl", "-d", "calculadora", "--cd", "/calculadora", "--exec", "bash", "start.sh"]
-        # Tenta: opção 1 + um Enter extra (caso a calculadora peça "pressione Enter para continuar")
-        proc = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        stdout, stderr = proc.communicate("1")
-
-        if proc.returncode != 0:
-            return None, f"Erro ao executar o script (code {proc.returncode}): {stderr.strip()} - Saída: {stdout[:500]}"
-
-        return stdout, None
-
-    except subprocess.TimeoutExpired as e:
-        # Mata o processo se estourar o tempo
-        try:
-            proc.kill()
-        except Exception:
-            pass
-        return None, f"Tempo limite excedido ao executar a calculadora ({e.timeout}s)."
-    except FileNotFoundError:
-        return None, "WSL não encontrado. Verifique se o WSL está instalado e acessível pelo serviço do Django."
-    except Exception as e:
-        return None, f"Erro inesperado: {str(e)}"
+        # envia a opção 1 e dois Enters
+        if proc.stdin:
+            proc.stdin.write("1")
+            proc.stdin.flush()
+        # dá um pequeno tempo pra subir o servidor local (porta 80)
+        time.sleep(2)
+    except Exception:
+        pass
+    # não chamamos communicate(); deixamos rodar em background
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["POST"])  # só POST pra “start”
 def calcular(request):
-    output, error = run_calculadora()
-    if error:
-        return JsonResponse({"error": error}, status=500)
-    return JsonResponse({"resultado": output})
+    # Dispara em thread separada para nunca bloquear a resposta HTTP
+    t = threading.Thread(target=_start_calc_background, daemon=True)
+    t.start()
+    return JsonResponse({"ok": True, "message": "Calculadora iniciada em background. Abra http://localhost/."})
